@@ -1,0 +1,13 @@
+image: node:18
+
+pages:
+  stage: deploy
+  script:
+    - npm ci
+    - BASE_PATH=/$CI_PROJECT_NAME npm run build
+    - mv dist public
+  artifacts:
+    paths:
+      - public
+  only:
+    - main
