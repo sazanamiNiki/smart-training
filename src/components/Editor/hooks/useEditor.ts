@@ -71,6 +71,7 @@ export function useEditor(problem: Problem): UseEditorReturn {
       code,
       testCases: problem.testCases,
       functionName: problem.functionName,
+      constants: problem.constants,
     };
     worker.postMessage(message);
   };

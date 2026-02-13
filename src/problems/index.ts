@@ -1,7 +1,23 @@
-import type { Problem } from '../types';
-import sum from './list/sum';
-import arrayMax from './list/arrayMax';
+import type { Problem, ProblemMeta, TestCase } from '../types';
 
-const problems: Problem[] = [sum, arrayMax];
+const metaModules = import.meta.glob('/static/questions/qu*/meta.ts', { eager: true }) as Record<string, { meta: ProblemMeta }>;
+const testCaseModules = import.meta.glob('/static/questions/qu*/testCases.ts', { eager: true }) as Record<string, { testCases: TestCase[] }>;
+const readmeModules = import.meta.glob('/static/questions/qu*/README.md', { eager: true, query: '?raw', import: 'default' }) as Record<string, string>;
+const executeModules = import.meta.glob('/static/questions/qu*/execute.ts', { eager: true, query: '?raw', import: 'default' }) as Record<string, string>;
+const constantsModules = import.meta.glob('/static/questions/qu*/constants.ts', { eager: true, query: '?raw', import: 'default' }) as Record<string, string>;
+
+const problems: Problem[] = Object.keys(metaModules)
+  .sort()
+  .map(metaPath => {
+    const dir = metaPath.replace('/meta.ts', '');
+    const { meta } = metaModules[metaPath];
+    const { testCases } = testCaseModules[`${dir}/testCases.ts`];
+    const readme = readmeModules[`${dir}/README.md`];
+    const initialCode = executeModules[`${dir}/execute.ts`];
+    const rawConstants = constantsModules[`${dir}/constants.ts`];
+    const constants = rawConstants?.replace(/^export\s+/gm, '');
+
+    return { ...meta, readme, initialCode, testCases, constants };
+  });
 
 export default problems;

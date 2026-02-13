@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import { Box, FormControl, MenuItem, Select, Typography } from '@mui/material';
+import { Box, Button, FormControl, MenuItem, Select, Typography } from '@mui/material';
 import problems from './problems';
 import { useEditor } from './components/Editor/hooks/useEditor';
 import EditorPanel from './components/Editor/EditorPanel';
-import TestResultPanel from './components/TestRunner/TestResultPanel';
+import ResultsPanel from './components/ResultsPanel/ResultsPanel';
 import { loadSelectedProblemId, saveSelectedProblemId } from './services/storage.service';
+import { validateAllProblems } from './utils/problemValidator';
 
 export default function App() {
   const [selectedId, setSelectedId] = useState<string>(
@@ -17,6 +18,19 @@ export default function App() {
   const handleProblemChange = (id: string) => {
     setSelectedId(id);
     saveSelectedProblemId(id);
+  };
+
+  const handleValidate = () => {
+    const validationResults = validateAllProblems(problems);
+    const report = validationResults
+      .map((r) =>
+        r.valid
+          ? `[OK] ${r.id}`
+          : `[FAIL] ${r.id}\n${r.errors.map((e) => `  - ${e}`).join('\n')}`
+      )
+      .join('\n');
+    console.log('=== Problem Validation ===\n' + report);
+    alert('=== Problem Validation ===\n' + report);
   };
 
   return (
@@ -55,11 +69,16 @@ export default function App() {
             ))}
           </Select>
         </FormControl>
+        {import.meta.env.DEV && (
+          <Button variant="outlined" size="small" onClick={handleValidate}>
+            Validate
+          </Button>
+        )}
       </Box>
       <Box sx={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
         <Box
           sx={{
-            width: '70%',
+            width: '60%',
             height: '100%',
             borderRight: '1px solid',
             borderColor: 'divider',
@@ -73,8 +92,8 @@ export default function App() {
             running={running}
           />
         </Box>
-        <Box sx={{ width: '30%', height: '100%', overflow: 'auto' }}>
-          <TestResultPanel results={results} running={running} />
+        <Box sx={{ width: '40%', height: '100%', overflow: 'hidden' }}>
+          <ResultsPanel problem={problem} results={results} running={running} />
         </Box>
       </Box>
     </Box>

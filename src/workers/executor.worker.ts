@@ -1,13 +1,21 @@
 import { transformTS } from '../services/esbuild.service';
 import type { WorkerRequest, WorkerResponse, TestResult } from '../types';
 
+function stripModuleSyntax(code: string): string {
+  return code
+    .replace(/^export\s*\{[^}]*\}\s*;?\s*$/gm, '')
+    .replace(/^export\s+(const|let|var|function\*?|class)\s+/gm, '$1 ')
+    .replace(/^export\s+default\s+/gm, 'var __default = ')
+    .trim();
+}
+
 self.onmessage = async (event) => {
-  const { type, code, testCases, functionName } = event.data as WorkerRequest;
+  const { type, code, testCases, functionName, constants } = event.data as WorkerRequest;
   if (type !== 'run') return;
 
-  let jsCode: string;
+  let userJsCode: string;
   try {
-    jsCode = await transformTS(code);
+    userJsCode = stripModuleSyntax(await transformTS(code));
   } catch (err) {
     const response: WorkerResponse = {
       type: 'error',
@@ -20,9 +28,10 @@ self.onmessage = async (event) => {
   const results: TestResult[] = [];
   for (const { input, expected } of testCases) {
     try {
-      const fn = new Function(`${jsCode}\nreturn ${functionName};`)() as (
-        ...args: unknown[]
-      ) => unknown;
+      const body = constants
+        ? `${constants}\nreturn (function(){\n${userJsCode}\nreturn ${functionName};\n})()`
+        : `${userJsCode}\nreturn ${functionName};`;
+      const fn = new Function(body)() as (...args: unknown[]) => unknown;
       const actual = await Promise.race([
         Promise.resolve().then(() => fn(...input)),
         new Promise<never>((_, reject) =>

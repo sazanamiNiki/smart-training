@@ -1,4 +1,4 @@
-import * as esbuild from 'esbuild-wasm';
+import * as esbuild from 'esbuild-wasm/esm/browser.js';
 import wasmURL from 'esbuild-wasm/esbuild.wasm?url';
 
 let initialized = false;

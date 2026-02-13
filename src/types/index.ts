@@ -1,11 +1,16 @@
-export interface Problem {
+export interface ProblemMeta {
   id: string;
   title: string;
   mode: 'create' | 'fix';
   description: string;
   functionName: string;
+}
+
+export interface Problem extends ProblemMeta {
+  readme: string;
   initialCode: string;
   testCases: TestCase[];
+  constants?: string;
 }
 
 export interface TestCase {
@@ -31,6 +36,7 @@ export interface RunMessage {
   code: string;
   testCases: TestCase[];
   functionName: string;
+  constants?: string;
 }
 
 export interface ResultMessage {

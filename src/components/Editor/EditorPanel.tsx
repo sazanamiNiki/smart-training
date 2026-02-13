@@ -1,5 +1,6 @@
+import { useEffect, useRef } from 'react';
 import { Box, Button, Typography } from '@mui/material';
-import Editor from '@monaco-editor/react';
+import Editor, { useMonaco } from '@monaco-editor/react';
 import type { EditorPanelProps } from './types';
 
 export default function EditorPanel({
@@ -9,6 +10,28 @@ export default function EditorPanel({
   onRun,
   running,
 }: EditorPanelProps) {
+  const monaco = useMonaco();
+  const libRef = useRef<{ dispose(): void } | null>(null);
+
+  useEffect(() => {
+    if (!monaco) return;
+    libRef.current?.dispose();
+    libRef.current = null;
+    if (problem.constants) {
+      const ambientDecls = problem.constants.replace(
+        /^const\s+(\w+)\s*=\s*('(?:[^'\\]|\\.)*'|"(?:[^"\\]|\\.)*")\s*;?/gm,
+        'declare const $1: $2;'
+      );
+      libRef.current = monaco.typescript.typescriptDefaults.addExtraLib(
+        ambientDecls,
+        'ts:problem-constants.d.ts'
+      );
+    }
+    return () => {
+      libRef.current?.dispose();
+    };
+  }, [monaco, problem.constants]);
+
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       <Box
