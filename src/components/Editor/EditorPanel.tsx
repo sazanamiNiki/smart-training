@@ -1,64 +1,69 @@
-import MonacoEditor from '@monaco-editor/react';
-import { Box, Button, CircularProgress, Typography } from '@mui/material';
+import { Box, Button, Typography } from '@mui/material';
+import Editor from '@monaco-editor/react';
 import type { EditorPanelProps } from './types';
 
-/**
- * Display Monaco Editor with problem description and run button.
- *
- * @param props - Editor panel props.
- * @returns Editor panel element.
- */
 export default function EditorPanel({
   problem,
   code,
   onCodeChange,
   onRun,
-  isRunning,
+  running,
 }: EditorPanelProps) {
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-      <Box sx={{ p: 2, borderBottom: '1px solid', borderColor: 'divider' }}>
-        <Typography variant="h6">{problem.title}</Typography>
-        <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-          {problem.description}
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 2,
+          px: 2,
+          py: 1,
+          borderBottom: '1px solid',
+          borderColor: 'divider',
+          bgcolor: 'background.paper',
+          flexShrink: 0,
+        }}
+      >
+        <Typography variant="body1" sx={{ fontWeight: 600 }}>
+          {problem.title}
         </Typography>
+        <Typography variant="body2" color="text.secondary" sx={{ mr: 'auto' }}>
+          [{problem.mode === 'create' ? '新規実装' : 'バグ修正'}]
+        </Typography>
+        <Button variant="contained" size="small" onClick={onRun} disabled={running}>
+          Run
+        </Button>
       </Box>
-
       <Box sx={{ flex: 1, overflow: 'hidden' }}>
-        <MonacoEditor
+        <Editor
           height="100%"
           language="typescript"
-          value={code}
-          onChange={(val) => onCodeChange(val ?? '')}
           theme="vs-dark"
+          value={code}
+          onChange={(value) => onCodeChange(value ?? '')}
           options={{
             fontSize: 14,
             minimap: { enabled: false },
             scrollBeyondLastLine: false,
-            tabSize: 2,
-            fontFamily:
-              'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
             lineNumbers: 'on',
             renderLineHighlight: 'line',
-            bracketPairColorization: { enabled: true },
+            automaticLayout: true,
           }}
         />
       </Box>
-
       <Box
         sx={{
-          p: 2,
+          px: 2,
+          py: 1,
           borderTop: '1px solid',
           borderColor: 'divider',
-          display: 'flex',
-          alignItems: 'center',
-          gap: 2,
+          bgcolor: 'background.paper',
+          flexShrink: 0,
         }}
       >
-        <Button variant="contained" onClick={onRun} disabled={isRunning}>
-          {isRunning ? 'Running...' : 'Run Tests'}
-        </Button>
-        {isRunning && <CircularProgress size={20} />}
+        <Typography variant="body2" color="text.secondary">
+          {problem.description}
+        </Typography>
       </Box>
     </Box>
   );

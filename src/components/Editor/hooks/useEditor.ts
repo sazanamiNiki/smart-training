@@ -1,70 +1,79 @@
-import { useState, useRef, useCallback } from 'react';
-import type { Problem, TestResult, WorkerResponse } from '../../../types';
-import { initEsbuild, transformTS } from '../../../services/esbuild.service';
+import { useState, useEffect, useRef } from 'react';
+import type { Problem, TestResult, WorkerRequest, WorkerResponse } from '../../../types';
+import { saveProblemCode, loadProblemCode } from '../../../services/storage.service';
 
-/**
- * Manage editor state and test execution for a given problem.
- *
- * @param problem - The problem to solve.
- * @returns Editor state and actions.
- */
-export function useEditor(problem: Problem) {
-  const [code, setCode] = useState(problem.initialCode);
-  const [isRunning, setIsRunning] = useState(false);
-  const [results, setResults] = useState<Array<TestResult> | null>(null);
-  const [error, setError] = useState<string | null>(null);
+export interface UseEditorReturn {
+  code: string;
+  setCode: (code: string) => void;
+  results: TestResult[];
+  running: boolean;
+  run: () => void;
+}
+
+export function useEditor(problem: Problem): UseEditorReturn {
+  const [code, setCodeState] = useState<string>(
+    () => loadProblemCode(problem.id) ?? problem.initialCode
+  );
+  const [results, setResults] = useState<TestResult[]>([]);
+  const [running, setRunning] = useState(false);
   const workerRef = useRef<Worker | null>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const runTests = useCallback(async () => {
-    setIsRunning(true);
-    setError(null);
-    setResults(null);
+  useEffect(() => {
+    workerRef.current = new Worker(
+      new URL('../../../workers/executor.worker.ts', import.meta.url),
+      { type: 'module' }
+    );
+    return () => {
+      workerRef.current?.terminate();
+    };
+  }, []);
 
-    if (workerRef.current) {
-      workerRef.current.terminate();
-    }
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    const saved = loadProblemCode(problem.id);
+    setCodeState(saved ?? problem.initialCode);
+    setResults([]);
+  }, [problem]);
 
-    try {
-      await initEsbuild();
-      const jsCode = await transformTS(code);
+  const setCode = (newCode: string) => {
+    setCodeState(newCode);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      saveProblemCode(problem.id, newCode);
+    }, 300);
+  };
 
-      const worker = new Worker(
-        new URL('../../../workers/executor.worker.ts', import.meta.url),
-        { type: 'module' },
-      );
-      workerRef.current = worker;
+  const run = () => {
+    if (!workerRef.current || running) return;
+    setRunning(true);
+    const worker = workerRef.current;
+    worker.onmessage = (event) => {
+      worker.onmessage = null;
+      setRunning(false);
+      const data = event.data as WorkerResponse;
+      if (data.type === 'result') {
+        setResults(data.results);
+      } else {
+        setResults([
+          {
+            input: [],
+            expected: undefined,
+            actual: undefined,
+            passed: false,
+            error: data.message,
+          },
+        ]);
+      }
+    };
+    const message: WorkerRequest = {
+      type: 'run',
+      code,
+      testCases: problem.testCases,
+      functionName: problem.functionName,
+    };
+    worker.postMessage(message);
+  };
 
-      const timeout = setTimeout(() => {
-        worker.terminate();
-        setError('Timeout: execution exceeded 2 seconds.');
-        setIsRunning(false);
-      }, 2000);
-
-      worker.onmessage = (event: MessageEvent<WorkerResponse>) => {
-        clearTimeout(timeout);
-        const response = event.data;
-        if (response.ok) {
-          setResults(response.results);
-        } else {
-          setError(response.error);
-        }
-        setIsRunning(false);
-        worker.terminate();
-      };
-
-      worker.onerror = (e) => {
-        clearTimeout(timeout);
-        setError(e.message);
-        setIsRunning(false);
-        worker.terminate();
-      };
-
-      worker.postMessage({ code: jsCode, tests: problem.tests, functionName: problem.functionName });
-    } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
-      setIsRunning(false);
-    }
-  }, [code, problem]);
-
-  return { code, setCode, isRunning, results, error, runTests };
+  return { code, setCode, results, running, run };
 }

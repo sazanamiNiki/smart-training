@@ -28,20 +28,11 @@ const theme = createTheme({
   typography: {
     fontFamily:
       'ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif',
-    fontSize: 14,
-    h6: {
-      fontSize: '18px',
-      fontWeight: 600,
-    },
-    body1: {
-      fontSize: '14px',
-    },
-    body2: {
-      fontSize: '12px',
-    },
-    caption: {
-      fontSize: '12px',
-    },
+    h1: { fontSize: '1.25rem', fontWeight: 600 },
+    h2: { fontSize: '1.125rem', fontWeight: 600 },
+    body1: { fontSize: '0.875rem' },
+    body2: { fontSize: '0.75rem' },
+    caption: { fontSize: '0.75rem' },
   },
   spacing: 8,
   shape: {
@@ -51,31 +42,28 @@ const theme = createTheme({
     MuiButton: {
       styleOverrides: {
         root: {
-          borderRadius: '8px',
+          borderRadius: 0,
           textTransform: 'none',
+          boxShadow: 'none',
+          '&:hover': { boxShadow: 'none' },
+        },
+      },
+    },
+    MuiPaper: {
+      styleOverrides: {
+        root: {
+          backgroundImage: 'none',
+          border: '1px solid #1f2937',
         },
       },
     },
     MuiTableCell: {
       styleOverrides: {
         root: {
-          borderColor: '#1f2937',
-          fontFamily:
-            'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
-          fontSize: '13px',
-        },
-        head: {
-          color: '#9ca3af',
-          fontWeight: 600,
-          fontFamily:
-            'ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif',
-        },
-      },
-    },
-    MuiCssBaseline: {
-      styleOverrides: {
-        body: {
-          backgroundColor: '#0f172a',
+          fontFamily: 'monospace',
+          fontSize: '0.8125rem',
+          borderBottom: '1px solid #1f2937',
+          padding: '6px 16px',
         },
       },
     },

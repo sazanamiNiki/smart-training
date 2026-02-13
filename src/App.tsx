@@ -1,75 +1,80 @@
-import { Box, FormControl, MenuItem, Select, Typography } from '@mui/material';
-import type { SelectChangeEvent } from '@mui/material';
 import { useState } from 'react';
-import EditorPanel from './components/Editor/EditorPanel';
+import { Box, FormControl, MenuItem, Select, Typography } from '@mui/material';
+import problems from './problems';
 import { useEditor } from './components/Editor/hooks/useEditor';
+import EditorPanel from './components/Editor/EditorPanel';
 import TestResultPanel from './components/TestRunner/TestResultPanel';
-import arrayMax from './problems/list/arrayMax';
-import sum from './problems/list/sum';
-import type { Problem } from './types';
+import { loadSelectedProblemId, saveSelectedProblemId } from './services/storage.service';
 
-const PROBLEMS: Array<Problem> = [sum, arrayMax];
-
-/**
- * Root application component.
- *
- * @returns Application element.
- */
 export default function App() {
-  const [selectedId, setSelectedId] = useState<string>(PROBLEMS[0].id);
-  const problem = PROBLEMS.find((p) => p.id === selectedId) ?? PROBLEMS[0];
-  const { code, setCode, isRunning, results, error, runTests } = useEditor(problem);
+  const [selectedId, setSelectedId] = useState<string>(
+    () => loadSelectedProblemId() ?? problems[0].id
+  );
 
-  const handleProblemChange = (e: SelectChangeEvent) => {
-    setSelectedId(e.target.value);
+  const problem = problems.find((p) => p.id === selectedId) ?? problems[0];
+  const { code, setCode, results, running, run } = useEditor(problem);
+
+  const handleProblemChange = (id: string) => {
+    setSelectedId(id);
+    saveSelectedProblemId(id);
   };
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
+    <Box
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        height: '100vh',
+        bgcolor: 'background.default',
+        overflow: 'hidden',
+      }}
+    >
       <Box
         sx={{
-          px: 3,
-          py: 1.5,
-          borderBottom: '1px solid',
-          borderColor: 'divider',
-          bgcolor: 'background.paper',
           display: 'flex',
           alignItems: 'center',
-          gap: 3,
+          gap: 2,
+          px: 2,
+          py: 1,
+          bgcolor: 'background.paper',
+          borderBottom: '1px solid',
+          borderColor: 'divider',
+          flexShrink: 0,
         }}
       >
-        <Typography sx={{ fontSize: '16px', fontWeight: 600, color: 'primary.main' }}>
-          TypeScript Practice
-        </Typography>
+        <Typography variant="h2">Smart Training</Typography>
         <FormControl size="small" sx={{ minWidth: 200 }}>
           <Select
             value={selectedId}
-            onChange={handleProblemChange}
-            sx={{ fontSize: '14px' }}
+            onChange={(e) => handleProblemChange(e.target.value)}
           >
-            {PROBLEMS.map((p) => (
-              <MenuItem key={p.id} value={p.id} sx={{ fontSize: '14px' }}>
+            {problems.map((p) => (
+              <MenuItem key={p.id} value={p.id}>
                 {p.title}
               </MenuItem>
             ))}
           </Select>
         </FormControl>
       </Box>
-
       <Box sx={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
         <Box
-          sx={{ width: '70%', borderRight: '1px solid', borderColor: 'divider' }}
+          sx={{
+            width: '70%',
+            height: '100%',
+            borderRight: '1px solid',
+            borderColor: 'divider',
+          }}
         >
           <EditorPanel
             problem={problem}
             code={code}
             onCodeChange={setCode}
-            onRun={runTests}
-            isRunning={isRunning}
+            onRun={run}
+            running={running}
           />
         </Box>
-        <Box sx={{ width: '30%' }}>
-          <TestResultPanel results={results} isRunning={isRunning} error={error} />
+        <Box sx={{ width: '30%', height: '100%', overflow: 'auto' }}>
+          <TestResultPanel results={results} running={running} />
         </Box>
       </Box>
     </Box>

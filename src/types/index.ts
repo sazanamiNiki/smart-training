@@ -1,24 +1,18 @@
-/** Mode of a problem. */
-export type ProblemMode = 'implement' | 'bugfix';
+export interface Problem {
+  id: string;
+  title: string;
+  mode: 'create' | 'fix';
+  description: string;
+  functionName: string;
+  initialCode: string;
+  testCases: TestCase[];
+}
 
-/** Single test case definition. */
 export interface TestCase {
   input: unknown[];
   expected: unknown;
 }
 
-/** Problem definition. */
-export interface Problem {
-  id: string;
-  title: string;
-  description: string;
-  mode: ProblemMode;
-  functionName: string;
-  initialCode: string;
-  tests: Array<TestCase>;
-}
-
-/** Result of a single test case execution. */
 export interface TestResult {
   input: unknown[];
   expected: unknown;
@@ -27,14 +21,27 @@ export interface TestResult {
   error?: string;
 }
 
-/** Message sent to executor worker. */
-export interface WorkerMessage {
+export interface SessionState {
+  selectedProblemId: string;
+  codes: Record<string, string>;
+}
+
+export interface RunMessage {
+  type: 'run';
   code: string;
-  tests: Array<TestCase>;
+  testCases: TestCase[];
   functionName: string;
 }
 
-/** Response from executor worker. */
-export type WorkerResponse =
-  | { ok: true; results: Array<TestResult> }
-  | { ok: false; error: string };
+export interface ResultMessage {
+  type: 'result';
+  results: TestResult[];
+}
+
+export interface ErrorMessage {
+  type: 'error';
+  message: string;
+}
+
+export type WorkerRequest = RunMessage;
+export type WorkerResponse = ResultMessage | ErrorMessage;

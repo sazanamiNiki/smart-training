@@ -3,15 +3,16 @@ import type { Problem } from '../../types';
 const arrayMax: Problem = {
   id: 'arrayMax',
   title: '配列の最大値',
-  description: '数値の配列を受け取り、その最大値を返す関数 `arrayMax` を実装してください。配列が空の場合は `null` を返してください。',
-  mode: 'implement',
+  mode: 'fix',
+  description: '数値配列から最大値を返す関数 `arrayMax` のバグを修正してください。',
   functionName: 'arrayMax',
-  initialCode: 'function arrayMax(nums: number[]): number | null {\n\n}',
-  tests: [
+  initialCode:
+    'function arrayMax(arr: number[]): number {\n  let max = 0;\n  for (const n of arr) {\n    if (n > max) max = n;\n  }\n  return max;\n}',
+  testCases: [
     { input: [[1, 3, 2]], expected: 3 },
-    { input: [[-1, -5, -2]], expected: -1 },
-    { input: [[42]], expected: 42 },
-    { input: [[]], expected: null },
+    { input: [[-1, -3, -2]], expected: -1 },
+    { input: [[5]], expected: 5 },
+    { input: [[0, 0, 0]], expected: 0 },
   ],
 };
 
