@@ -64,7 +64,7 @@ export default function App() {
           >
             {problems.map((p) => (
               <MenuItem key={p.id} value={p.id}>
-                {p.title}
+                {p.quId} - {p.title}
               </MenuItem>
             ))}
           </Select>

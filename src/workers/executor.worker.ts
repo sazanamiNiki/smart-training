@@ -25,11 +25,16 @@ self.onmessage = async (event) => {
     return;
   }
 
+  let constantsJsCode = '';
+  if (constants) {
+    constantsJsCode = stripModuleSyntax(await transformTS(constants));
+  }
+
   const results: TestResult[] = [];
-  for (const { input, expected } of testCases) {
+  for (const { input, expected, name } of testCases) {
     try {
-      const body = constants
-        ? `${constants}\nreturn (function(){\n${userJsCode}\nreturn ${functionName};\n})()`
+      const body = constantsJsCode
+        ? `${constantsJsCode}\nreturn (function(){\n${userJsCode}\nreturn ${functionName};\n})()`
         : `${userJsCode}\nreturn ${functionName};`;
       const fn = new Function(body)() as (...args: unknown[]) => unknown;
       const actual = await Promise.race([
@@ -42,6 +47,7 @@ self.onmessage = async (event) => {
         input,
         expected,
         actual,
+        name,
         passed: JSON.stringify(actual) === JSON.stringify(expected),
       });
     } catch (err) {
@@ -49,6 +55,7 @@ self.onmessage = async (event) => {
         input,
         expected,
         actual: undefined,
+        name,
         passed: false,
         error: err instanceof Error ? err.message : String(err),
       });

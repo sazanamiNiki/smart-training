@@ -52,64 +52,6 @@
    - メインアプリケーション（App.tsx, main.tsx）
    - index.html
 
-## 機能要件（実装予定）
-
-### A. エディタ & 実行環境
-- Monaco Editorを使用し、TypeScriptの型補完を有効にする
-- esbuild-wasm でユーザーコードをJSに変換し、Web Workerで実行
-- 2秒のタイムアウトを設定
-- テストケース（入力/期待値）に基づき、実行結果とエラー詳細をMUI Tableで表示
-
-### B. 問題管理システム
-- src/problems/list/ 内に個別のTypeScriptファイルとして問題を定義
-- 新規作成モード: 関数シグネチャのみを提供
-- バグ修正モード: 初期コードにバグを含ませ、ユーザーに修正させる
-
-### C. ハイブリッドAIレビュー
-- 簡易レビュー (Gemini 1.5 Flash): テスト実行ごとに「無料枠」で動作のアドバイス
-- 成長評価レビュー (Claude 3.5 Sonnet): 提出時に実行。前回/今回のコードを比較し成長度を評価
-- GitHubの compareCommits APIから取得した diff をAIに送信
-
-### D. セキュリティ・認証
-- トークン・APIキーの非保持: localStorage や Cookie に一切保存しない
-- オンデマンド入力: コミット/レビュー実行時にのみMUIダイアログで入力を求める
-- メモリ上からも即座に破棄
-
-## 非機能要件
-
-- GitLab Pages対応: vite.config.ts で base パスを設定可能
-- 可読性: 生成されるコードにコメントは一切入れないこと
-
-## 最初の実装タスク（規約定義後）
-
-1. プロジェクトのボイラープレート作成（設定ファイルは完了済み）
-2. esbuild-wasm を初期化し、Monaco Editorで書いた sum(a, b) 関数のテストが通る最小構成の実装
-3. テスト合格後に、GitHub API経由で差分を取得するロジックのスタブ（枠組み）作成
-
-## 作業再開時の手順
-
-1. このファイル（DEVELOPMENT_STATUS.md）を確認
-2. コーディング規約を提示
-3. 規約に従った実装を開始
-4. 最初のターゲット: sum(a, b) 関数のテストが通る最小実装
-
-## 既存の設定ファイル内容
-
-### package.json (抜粋)
-```json
-{
-  "name": "smart-training",
-  "dependencies": {
-    "@monaco-editor/react": "^4.6.0",
-    "@mui/material": "^5.15.7",
-    "@octokit/rest": "^20.0.2",
-    "@google/generative-ai": "^0.2.1",
-    "@anthropic-ai/sdk": "^0.20.0",
-    "esbuild-wasm": "^0.20.0",
-    "react": "^18.2.0"
-  }
-}
-```
 
 ### vite.config.ts
 - BASE_PATH環境変数対応済み
@@ -158,3 +100,18 @@
 - 実装コードは削除済み（ディレクトリ構造のみ保持）
 - node_modules は保持（再インストール不要）
 - 規約定義後に実装を開始する予定
+- `main` への直接コミット禁止
+- `develop` への直接コミット禁止（マージのみ）
+- `develop` → `main` 以外の逆方向マージ禁止
+- `--force` push 禁止
+
+## 作業手順（標準）
+
+```bash
+git checkout develop
+git checkout -b feature/<名称>
+# 実装・コミット
+git checkout develop
+git merge --no-ff feature/<名称>
+git branch -d feature/<名称>
+```

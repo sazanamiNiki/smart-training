@@ -1,5 +1,6 @@
 export interface ProblemMeta {
   id: string;
+  quId: string;
   title: string;
   mode: 'create' | 'fix';
   description: string;
@@ -16,9 +17,11 @@ export interface Problem extends ProblemMeta {
 export interface TestCase {
   input: unknown[];
   expected: unknown;
+  name: string;
 }
 
 export interface TestResult {
+  name: string;
   input: unknown[];
   expected: unknown;
   actual: unknown;
