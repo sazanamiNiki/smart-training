@@ -1,4 +1,6 @@
-/** Answer data loaded from static/questions/qu*/answers/*.ts files. */
+/**
+ * Answer data loaded from static/questions/qu{N}/answers/ files.
+ */
 export interface Answer {
   /** File name without extension. e.g. '032' */
   answerId: string;
