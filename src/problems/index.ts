@@ -10,6 +10,7 @@ const problems: Problem[] = Object.keys(metaModules)
   .sort()
   .map(metaPath => {
     const dir = metaPath.replace('/meta.ts', '');
+    const quId = dir.split('/').pop() ?? '';
     const { meta } = metaModules[metaPath];
     const { testCases } = testCaseModules[`${dir}/testCases.ts`];
     const readme = readmeModules[`${dir}/README.md`];
@@ -17,7 +18,7 @@ const problems: Problem[] = Object.keys(metaModules)
     const rawConstants = constantsModules[`${dir}/constants.ts`];
     const constants = rawConstants?.replace(/^export\s+/gm, '');
 
-    return { ...meta, readme, initialCode, testCases, constants };
+    return { ...meta, quId, readme, initialCode, testCases, constants };
   });
 
 export default problems;

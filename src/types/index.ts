@@ -1,5 +1,6 @@
 export interface ProblemMeta {
   id: string;
+  quId: string;
   title: string;
   mode: 'create' | 'fix';
   description: string;
