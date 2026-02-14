@@ -7,9 +7,11 @@ import Editor from '@monaco-editor/react';
 import type { ResultsPanelProps } from './types';
 import { MarkdownWrapper } from '../MarkdownWrapper/MarkdownWrapper';
 import { Results } from '../Results/Results';
+import CommunityAnswers from '../CommunityAnswers/CommunityAnswers';
 
-const RESULT_TAB = 1;
 const DESCRIPTION_TAB = 0;
+const RESULT_TAB = 1;
+const COMMUNITY_TAB = 2;
 
 export default function ResultsPanel({ problem, results, running }: ResultsPanelProps) {
   const [tab, setTab] = useState(DESCRIPTION_TAB);
@@ -34,6 +36,7 @@ export default function ResultsPanel({ problem, results, running }: ResultsPanel
       >
         <Tab label="問題説明" />
         <Tab label="テスト結果" />
+        <Tab label="みんなの回答" />
       </Tabs>
 
       {tab === DESCRIPTION_TAB && (
@@ -102,6 +105,10 @@ export default function ResultsPanel({ problem, results, running }: ResultsPanel
 
       {tab === RESULT_TAB && (
         <Results running={running} results={results} />
+      )}
+
+      {tab === COMMUNITY_TAB && (
+        <CommunityAnswers quId={problem.quId} />
       )}
     </Box>
   );
