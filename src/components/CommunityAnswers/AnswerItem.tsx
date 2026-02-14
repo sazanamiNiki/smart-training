@@ -1,21 +1,9 @@
 import { useState } from 'react';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
-import { Box, Collapse, Typography } from '@mui/material';
-import { styled } from '@mui/material/styles';
+import { Box, Typography } from '@mui/material';
 import type { AnswerItemProps } from './types';
-
-const CodeBlock = styled('pre')(({ theme }) => ({
-  margin: 0,
-  padding: theme.spacing(2),
-  overflow: 'auto',
-  fontSize: 13,
-  lineHeight: 1.5,
-  fontFamily: 'ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace',
-  backgroundColor: theme.palette.mode === 'dark' ? '#161b22' : '#f6f8fa',
-  borderRadius: 4,
-  border: `1px solid ${theme.palette.divider}`,
-}));
+import { Editor } from '@monaco-editor/react';
 
 /**
  * Render a single community answer entry.
@@ -28,28 +16,28 @@ export default function AnswerItem({ answer }: AnswerItemProps) {
   return (
     <Box
       sx={{
-        mb: 2,
+        flex: 1,
+        minHeight: 0,
+        display: 'flex',
+        flexDirection: 'column',
         border: '1px solid',
         borderColor: 'divider',
         borderRadius: 1,
         overflow: 'hidden',
       }}
     >
-      <Box sx={{ px: 2, py: 1, borderBottom: '1px solid', borderColor: 'divider' }}>
-        <Typography variant="body2" color="text.secondary">
-          回答者: {answer.answerId}
-        </Typography>
-      </Box>
-
       <Box
         onClick={() => setOpen(!open)}
         sx={{
+          flexShrink: 0,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
           px: 2,
           py: 0.5,
           cursor: 'pointer',
+          borderBottom: '1px solid',
+          borderColor: 'divider',
           '&:hover': { bgcolor: 'action.hover' },
         }}
       >
@@ -59,12 +47,38 @@ export default function AnswerItem({ answer }: AnswerItemProps) {
         {open ? <ExpandLessIcon sx={{ fontSize: 16 }} /> : <ExpandMoreIcon sx={{ fontSize: 16 }} />}
       </Box>
 
-      <Collapse in={open}>
-        <Box sx={{ px: 2, py: 1 }} />
-      </Collapse>
-
-      <Box sx={{ p: 2 }}>
-        <CodeBlock>{answer.code}</CodeBlock>
+      <Box sx={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
+        {open && (
+          <Box
+            sx={{
+              flex: 3,
+              overflow: 'auto',
+              px: 2,
+              py: 1,
+              borderBottom: '1px solid',
+              borderColor: 'divider',
+            }}
+          />
+        )}
+        <Box sx={{ flex: 7, minHeight: 0 }}>
+          <Editor
+            height="100%"
+            value={answer.code}
+            language="typescript"
+            theme="vs-dark"
+            options={{
+              readOnly: true,
+              minimap: { enabled: false },
+              lineNumbers: 'on',
+              scrollBeyondLastLine: false,
+              scrollbar: { vertical: 'auto', horizontal: 'auto' },
+              wordWrap: 'off',
+              fontSize: 13,
+              folding: false,
+              contextmenu: false,
+            }}
+          />
+        </Box>
       </Box>
     </Box>
   );
