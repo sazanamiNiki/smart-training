@@ -16,9 +16,11 @@ export interface Problem extends ProblemMeta {
 export interface TestCase {
   input: unknown[];
   expected: unknown;
+  name: string;
 }
 
 export interface TestResult {
+  name: string;
   input: unknown[];
   expected: unknown;
   actual: unknown;

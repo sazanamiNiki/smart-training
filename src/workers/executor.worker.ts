@@ -26,7 +26,7 @@ self.onmessage = async (event) => {
   }
 
   const results: TestResult[] = [];
-  for (const { input, expected } of testCases) {
+  for (const { input, expected, name } of testCases) {
     try {
       const body = constants
         ? `${constants}\nreturn (function(){\n${userJsCode}\nreturn ${functionName};\n})()`
@@ -42,6 +42,7 @@ self.onmessage = async (event) => {
         input,
         expected,
         actual,
+        name,
         passed: JSON.stringify(actual) === JSON.stringify(expected),
       });
     } catch (err) {
@@ -49,6 +50,7 @@ self.onmessage = async (event) => {
         input,
         expected,
         actual: undefined,
+        name,
         passed: false,
         error: err instanceof Error ? err.message : String(err),
       });
