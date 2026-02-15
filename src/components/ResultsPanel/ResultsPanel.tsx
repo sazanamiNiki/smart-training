@@ -90,6 +90,10 @@ export default function ResultsPanel({ problem, results, running, code }: Result
                       lineNumbers: 'on',
                       scrollBeyondLastLine: false,
                       scrollbar: { vertical: 'auto', horizontal: 'auto' },
+                      padding: {
+                        top: 8,
+                        bottom: 8
+                      },
                       wordWrap: 'off',
                       fontSize: 13,
                       folding: false,

@@ -55,5 +55,23 @@ export interface ErrorMessage {
   message: string;
 }
 
-export type WorkerRequest = RunMessage;
-export type WorkerResponse = ResultMessage | ErrorMessage;
+export type ConsoleLogType = 'log' | 'warn' | 'error' | 'info';
+
+export interface ConsoleEntry {
+  type: ConsoleLogType;
+  args: string;
+}
+
+export interface ExecuteMessage {
+  type: 'execute';
+  code: string;
+  constants?: string;
+}
+
+export interface ConsoleResultMessage {
+  type: 'console-result';
+  logs: ConsoleEntry[];
+}
+
+export type WorkerRequest = RunMessage | ExecuteMessage;
+export type WorkerResponse = ResultMessage | ErrorMessage | ConsoleResultMessage;

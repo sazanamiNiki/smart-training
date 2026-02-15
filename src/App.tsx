@@ -49,7 +49,7 @@ function AppContent({ colorMode, onColorModeChange }: AppContentProps) {
   };
 
   const problem = problems.find((p) => p.id === selectedId) ?? problems[0];
-  const { code, setCode, results, running, run } = useEditor(problem);
+  const { code, setCode, results, running, run, consoleLogs, executing, execute, clearConsoleLogs } = useEditor(problem);
 
   const handleProblemChange = (id: string) => {
     setSelectedId(id);
@@ -106,9 +106,13 @@ function AppContent({ colorMode, onColorModeChange }: AppContentProps) {
             problem={problem}
             code={code}
             onCodeChange={setCode}
-            onRun={run}
-            running={running}
             editorFontSize={editorFontSize}
+            run={run}
+            running={running}
+            execute={execute}
+            executing={executing}
+            consoleLogs={consoleLogs}
+            clearConsoleLogs={clearConsoleLogs}
           />
         </Box>
         <Box sx={{ width: '40%', height: '100%', overflow: 'hidden' }}>

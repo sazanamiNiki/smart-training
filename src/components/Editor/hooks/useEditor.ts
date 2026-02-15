@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import type { Problem, TestResult, WorkerRequest, WorkerResponse } from '../../../types';
+import type { Problem, TestResult, WorkerRequest, WorkerResponse, ConsoleEntry, ExecuteMessage } from '../../../types';
 import { saveProblemCode, loadProblemCode } from '../../../services/storage.service';
 
 export interface UseEditorReturn {
@@ -8,6 +8,10 @@ export interface UseEditorReturn {
   results: TestResult[];
   running: boolean;
   run: () => void;
+  consoleLogs: ConsoleEntry[];
+  executing: boolean;
+  execute: () => void;
+  clearConsoleLogs: () => void;
 }
 
 export function useEditor(problem: Problem): UseEditorReturn {
@@ -16,6 +20,8 @@ export function useEditor(problem: Problem): UseEditorReturn {
   );
   const [results, setResults] = useState<TestResult[]>([]);
   const [running, setRunning] = useState(false);
+  const [consoleLogs, setConsoleLogs] = useState<ConsoleEntry[]>([]);
+  const [executing, setExecuting] = useState(false);
   const workerRef = useRef<Worker | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -54,7 +60,7 @@ export function useEditor(problem: Problem): UseEditorReturn {
       const data = event.data as WorkerResponse;
       if (data.type === 'result') {
         setResults(data.results);
-      } else {
+      } else if (data.type === 'error') {
         setResults([
           {
             input: [],
@@ -78,5 +84,24 @@ export function useEditor(problem: Problem): UseEditorReturn {
     worker.postMessage(message);
   };
 
-  return { code, setCode, results, running, run };
+  const execute = () => {
+    if (!workerRef.current || running || executing) return;
+    setExecuting(true);
+    setConsoleLogs([]);
+    const worker = workerRef.current;
+    worker.onmessage = (event) => {
+      worker.onmessage = null;
+      setExecuting(false);
+      const data = event.data as WorkerResponse;
+      if (data.type === 'console-result') {
+        setConsoleLogs(data.logs);
+      }
+    };
+    const message: ExecuteMessage = { type: 'execute', code, constants: problem.constants };
+    worker.postMessage(message);
+  };
+
+  const clearConsoleLogs = () => setConsoleLogs([]);
+
+  return { code, setCode, results, running, run, consoleLogs, executing, execute, clearConsoleLogs };
 }
