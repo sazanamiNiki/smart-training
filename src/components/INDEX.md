@@ -1,5 +1,9 @@
 # Component Index
 
+## Header
+- `Header/HeaderBar` - アプリヘッダー（タイトル・問題選択・GitHubユーザー表示・3点メニュー）
+- `Header/InquiryDialog` - お問い合わせダイアログ（メッセージ入力・POST送信）
+
 ## Editor
 - `Editor/EditorPanel` - Monacoエディタ本体とテスト実行ボタンを管理するパネル
 
