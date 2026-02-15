@@ -1,6 +1,7 @@
 import type { ProblemMeta } from '../../../src/types';
 
 export const meta: ProblemMeta = {
+  quId: '5',
   id: 'encrypted-credit-card-number-checker',
   title: '暗号化されたクレジットカード番号の検証 💳',
   mode: 'create',

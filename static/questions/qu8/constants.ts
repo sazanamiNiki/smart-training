@@ -30,11 +30,6 @@ export const PATHS_CONFLICT_FILE_AS_DIR: string[] = [
 ];
 
 
-export const PATHS_CONFLICT_DIR_AS_FILE: string[] = [
-  '/app/config.json/settings',
-  '/app/config.json'
-];
-
 export type FileSystemTree = {
   files?: string[];
   [directoryName: string]: FileSystemTree | string[] | undefined;

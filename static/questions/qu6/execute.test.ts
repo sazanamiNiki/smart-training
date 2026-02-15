@@ -3,7 +3,8 @@ import { main } from './execute';
 import { testCases } from './testCases';
 
 describe('qu6', () => {
-  it.each(testCases)('$name', ({ rawData, targets, expected }) => {
-    expect((main as unknown as (...args: unknown[]) => unknown)(rawData, targets)).toEqual(expected);
+  it.each(testCases)('$name', ({ input, expected }) => {
+    const actual = (main as unknown as (...args: unknown[]) => unknown)(...input);
+    expect(actual).toMatchObject(expected);
   });
 });

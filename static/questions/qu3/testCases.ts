@@ -4,46 +4,74 @@ const LOWERCASE_ALPHABET = 'abcdefghijklmnopqrstuvwxyz';
 
 export const testCases = [
   {
-    name: 'READMEの例：小文字・大文字・スペース・記号が混在するケース',
-    text: 'Hello World!',
-    key: 'key',
+    name: 'エンコード: 小文字・大文字・スペース・記号が混在するケース',
+    input: ['key', 'Hello World!', 'encrypt'],
     expected: 'Rijvs Uyvjn!',
   },
   {
-    name: 'READMEの例：大文字とスペースのみのケース',
-    text: 'ATTACK AT DAWN',
-    key: 'lemon',
+    name: 'エンコード: 大文字とスペースのみのケース',
+    input: ['lemon', 'ATTACK AT DAWN', 'encrypt'],
     expected: 'LXFOPV EF RNHR',
   },
   {
-    name: 'アルファベットが末尾で循環するケース (Zの次がAになる)',
-    text: 'XYZ',
-    key: 'cde',
+    name: 'エンコード: アルファベットが末尾で循環するケース (Zの次がAになる)',
+    input: ['cde', 'XYZ', 'encrypt'],
     expected: 'ZBD',
   },
   {
-    name: '鍵が平文より長いケース',
-    text: 'HI',
-    key: 'secret',
+    name: 'エンコード: 鍵が平文より長いケース',
+    input: ['secret', 'HI', 'encrypt'],
     expected: 'ZM',
   },
   {
-    name: '平文が空文字列のケース',
-    text: '',
-    key: 'key',
+    name: 'エンコード: 平文が空文字列のケース',
+    input: ['key', '', 'encrypt'],
     expected: '',
   },
   {
-    name: '数字や記号が変化しないことを確認するケース',
-    text: 'Test 123 Go!',
-    key: 'a',
+    name: 'エンコード: 数字や記号が変化しないことを確認するケース',
+    input: ['a', 'Test 123 Go!', 'encrypt'],
     expected: 'Test 123 Go!',
   },
   {
-    name: '純粋な各文字',
-    text: `${LOWERCASE_ALPHABET} ${UPPERCASE_ALPHABET}`,
-    key: 'key',
+    name: 'エンコード: 純粋な各文字',
+    input: ['key', `${LOWERCASE_ALPHABET} ${UPPERCASE_ALPHABET}`, 'encrypt'],
     expected: 'kfanidqlgtojwrmzupcxsfavid YLGBOJERMHUPKXSNAVQDYTGBWJ',
+  },
+  {
+    name: 'デコード: 小文字・大文字・スペース・記号が混在するケース',
+    input: ['key', 'Rijvs Uyvjn!', 'decrypt'],
+    expected: 'Hello World!',
+  },
+  {
+    name: 'デコード: 大文字とスペースのみのケース',
+    input: ['lemon', 'LXFOPV EF RNHR', 'decrypt'],
+    expected: 'ATTACK AT DAWN',
+  },
+  {
+    name: 'デコード: アルファベットが末尾で循環するケース (Zの次がAになる)',
+    input: ['cde', 'ZBD', 'decrypt'],
+    expected: 'XYZ',
+  },
+  {
+    name: 'デコード: 鍵が平文より長いケース',
+    input: ['secret', 'ZM', 'decrypt'],
+    expected: 'HI',
+  },
+  {
+    name: 'デコード: 平文が空文字列のケース',
+    input: ['key', '', 'decrypt'],
+    expected: '',
+  },
+  {
+    name: 'デコード: 数字や記号が変化しないことを確認するケース',
+    input: ['a', 'Test 123 Go!', 'decrypt'],
+    expected: 'Test 123 Go!',
+  },
+  {
+    name: 'デコード: 純粋な各文字',
+    input: ['key', 'kfanidqlgtojwrmzupcxsfavid YLGBOJERMHUPKXSNAVQDYTGBWJ', 'decrypt'],
+    expected: `${LOWERCASE_ALPHABET} ${UPPERCASE_ALPHABET}`,
   },
 ];
 

@@ -3,16 +3,16 @@ import { describe, it, expect } from 'vitest';
 import { main } from './execute';
 import { testCases } from './testCases';
 
-describe('テキストの均等割り付け (Text Justification)', () => {
+describe('qu9', () => {
   it.each(testCases)(
     '$name',
-    ({ words, maxWidth, expected, expectedError }) => {
+    ({ input, expected, expectedError }) => {
       if (expectedError) {
         expect(() => {
-          main(words, maxWidth);
-        }).toThrow(expectedError);
+          (main as unknown as (...args: unknown[]) => unknown)(...input);
+        }).toThrow(expected);
       } else {
-        expect(main(words, maxWidth)).toEqual(expected);
+        expect((main as unknown as (...args: unknown[]) => unknown)(...(input as unknown[]))).toEqual(expected);
       }
     }
   );

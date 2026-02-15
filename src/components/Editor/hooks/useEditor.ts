@@ -70,6 +70,7 @@ export function useEditor(problem: Problem): UseEditorReturn {
     const message: WorkerRequest = {
       type: 'run',
       code,
+      testCode: problem.testCode,
       testCases: problem.testCases,
       functionName: problem.functionName,
       constants: problem.constants,

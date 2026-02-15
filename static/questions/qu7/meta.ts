@@ -1,6 +1,7 @@
 import type { ProblemMeta } from '../../../src/types';
 
 export const meta: ProblemMeta = {
+  quId: '7',
   id: 'pig-latin',
   title: 'ピッグ・ラテン (Pig Latin) 翻訳機 🐷',
   mode: 'create',
