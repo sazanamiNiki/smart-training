@@ -220,7 +220,7 @@ async function handleSubmit(request, env) {
   }
 
   const { token: installationToken } = await tokenRes.json();
-  const basePath = `static/${quId}/${login}`;
+  const basePath = `static/questions/${quId}/answers/${login}`;
   const commitMessage = `Add solution for ${quId} by ${login}`;
   const branch = env.GITHUB_TARGET_BRANCH;
 
