@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - develop
+      - add-answers
 
 permissions:
   contents: write
@@ -14,7 +15,20 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  deploy-static:
+    if: github.ref == 'refs/heads/add-answers'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: static
+          keep_files: true
+
   deploy:
+    if: github.ref != 'refs/heads/add-answers'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
