@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Box, Button, CircularProgress, TextField, Typography } from '@mui/material';
-import { useGitHubSubmission } from '../../hooks/useGitHubSubmission';
+import { useGitHubAuth } from '../../contexts/GitHubAuthContext';
 
 type Props = {
   quId: string;
@@ -116,7 +116,7 @@ const SubmissionArea = ({ quId, code }: Props) => {
     submitSuccess,
     startAuth,
     submit,
-  } = useGitHubSubmission();
+  } = useGitHubAuth();
 
   if (submitSuccess) {
     return (

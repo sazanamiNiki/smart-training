@@ -87,7 +87,6 @@ export const Results = ({ running, results, code, quId }: Props) => {
                           pl: 3,
                           pr: 2,
                           py: 1.5,
-                          backgroundColor: '#111827',
                           borderLeft: '2px solid',
                           borderColor: result.passed ? 'success.main' : 'error.main',
                         }}

@@ -1,0 +1,97 @@
+name: Validate Problem Addition
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'static/questions/**'
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check branch is from main
+        run: |
+          git fetch origin main
+          MERGE_BASE=$(git merge-base HEAD origin/main)
+          MAIN_HEAD=$(git rev-parse origin/main)
+          if [ "$MERGE_BASE" != "$MAIN_HEAD" ]; then
+            echo "::error::Branch must be created from main"
+            exit 1
+          fi
+
+      - name: Check only static/questions/ is changed
+        run: |
+          INVALID=$(git diff --name-only origin/main...HEAD | grep -v '^static/questions/')
+          if [ -n "$INVALID" ]; then
+            echo "::error::Files changed outside static/questions/:"
+            echo "$INVALID"
+            exit 1
+          fi
+
+      - name: Get changed question directories
+        id: dirs
+        run: |
+          DIRS=$(git diff --name-only origin/main...HEAD \
+            | grep -oP '^static/questions/qu[^/]+' \
+            | sort -u \
+            | xargs -I{} basename {} \
+            | tr '\n' ' ')
+          echo "dirs=$DIRS" >> $GITHUB_OUTPUT
+
+      - name: Check required files exist
+        env:
+          DIRS: ${{ steps.dirs.outputs.dirs }}
+        run: |
+          for DIR in $DIRS; do
+            for FILE in testCases.ts execute.test.ts execute.ts meta.ts README.md; do
+              if [ ! -f "static/questions/$DIR/$FILE" ]; then
+                echo "::error::Missing: static/questions/$DIR/$FILE"
+                exit 1
+              fi
+            done
+            echo "OK: $DIR"
+          done
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - name: Type check testCases.ts and execute.test.ts
+        env:
+          DIRS: ${{ steps.dirs.outputs.dirs }}
+        run: |
+          node -e "
+            const dirs = process.env.DIRS.trim().split(/\s+/).filter(Boolean);
+            const include = dirs.flatMap(d => [
+              'static/questions/' + d + '/testCases.ts',
+              'static/questions/' + d + '/execute.test.ts'
+            ]);
+            const config = { extends: './tsconfig.json', include, exclude: [] };
+            require('fs').writeFileSync('/tmp/tsconfig.check.json', JSON.stringify(config, null, 2));
+          "
+          npx tsc --project /tmp/tsconfig.check.json
+
+  auto-merge:
+    needs: [validate]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Merge PR
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh pr merge "${{ github.event.pull_request.number }}" \
+            --repo "${{ github.repository }}" \
+            --squash

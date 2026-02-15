@@ -1,7 +1,13 @@
 # Component Index
 
+## Header
+- `Header/HeaderBar` - アプリヘッダー（タイトル・問題選択・GitHubユーザー表示・3点メニュー）
+- `Header/InquiryDialog` - お問い合わせダイアログ（メッセージ入力・POST送信）
+- `Header/SettingsDialog` - 設定ダイアログ（レイアウト反転トグル）
+
 ## Editor
-- `Editor/EditorPanel` - Monacoエディタ本体とテスト実行ボタンを管理するパネル
+- `Editor/EditorPanel` - Monacoエディタ本体とExecuteボタンを管理するパネル
+- `Editor/ConsolePanel` - コード実行時のconsole出力を表示するパネル
 
 ## Results
 - `Results/Results` - テスト結果の一覧を表示するコンポーネント

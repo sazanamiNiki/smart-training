@@ -1,14 +1,22 @@
 import { useEffect, useRef } from 'react';
 import { Box, Button, Typography } from '@mui/material';
+import PlayArrowIcon from '@mui/icons-material/PlayArrow';
+import FactCheckIcon from '@mui/icons-material/FactCheck';
 import Editor, { useMonaco } from '@monaco-editor/react';
 import type { EditorPanelProps } from './types';
+import { ConsolePanel } from './ConsolePanel';
 
 export default function EditorPanel({
   problem,
   code,
   onCodeChange,
-  onRun,
+  editorFontSize,
+  run,
   running,
+  execute,
+  executing,
+  consoleLogs,
+  clearConsoleLogs,
 }: EditorPanelProps) {
   const monaco = useMonaco();
   const libRef = useRef<{ dispose(): void } | null>(null);
@@ -53,7 +61,24 @@ export default function EditorPanel({
         <Typography variant="body2" color="text.secondary" sx={{ mr: 'auto' }}>
           [{problem.mode === 'create' ? '新規実装' : 'バグ修正'}]
         </Typography>
-        <Button variant="contained" size="small" onClick={onRun} disabled={running}>
+        <Button
+          variant="contained"
+          color="success"
+          size="small"
+          onClick={run}
+          disabled={running || executing}
+          startIcon={<FactCheckIcon />}
+          sx={{ color: '#fff' }}
+        >
+          Test
+        </Button>
+        <Button
+          variant="contained"
+          size="small"
+          onClick={execute}
+          disabled={executing || running}
+          startIcon={<PlayArrowIcon />}
+        >
           Run
         </Button>
       </Box>
@@ -65,7 +90,11 @@ export default function EditorPanel({
           value={code}
           onChange={(value) => onCodeChange(value ?? '')}
           options={{
-            fontSize: 14,
+            fontSize: editorFontSize,
+            padding: {
+              top: 8,
+              bottom: 8
+            },
             minimap: { enabled: false },
             scrollBeyondLastLine: false,
             lineNumbers: 'on',
@@ -74,6 +103,7 @@ export default function EditorPanel({
           }}
         />
       </Box>
+      <ConsolePanel logs={consoleLogs} onClear={clearConsoleLogs} />
       <Box
         sx={{
           px: 2,

@@ -1,5 +1,5 @@
 import { transformTS } from '../services/esbuild.service';
-import type { WorkerRequest, WorkerResponse, TestResult } from '../types';
+import type { WorkerRequest, WorkerResponse, TestResult, ConsoleEntry } from '../types';
 
 const VITEST_MOCK = `
 var __testResults = [];
@@ -129,10 +129,39 @@ function stripTestImports(code: string): string {
     .trim();
 }
 
+const CONSOLE_MOCK = `
+var __consoleLogs = [];
+function __serialize(a) {
+  if (a === undefined) return 'undefined';
+  if (a === null) return 'null';
+  try { return typeof a === 'object' ? JSON.stringify(a) : String(a); } catch (e) { return String(a); }
+}
+var console = {
+  log:   function() { __consoleLogs.push({ type: 'log',   args: Array.prototype.slice.call(arguments).map(__serialize).join(' ') }); },
+  warn:  function() { __consoleLogs.push({ type: 'warn',  args: Array.prototype.slice.call(arguments).map(__serialize).join(' ') }); },
+  error: function() { __consoleLogs.push({ type: 'error', args: Array.prototype.slice.call(arguments).map(__serialize).join(' ') }); },
+  info:  function() { __consoleLogs.push({ type: 'info',  args: Array.prototype.slice.call(arguments).map(__serialize).join(' ') }); },
+};
+`;
+
 self.onmessage = async (event) => {
   try {
-    const { type, code, testCode, testCases, constants } = event.data as WorkerRequest;
+    const { type, code, constants } = event.data as WorkerRequest;
+
+    if (type === 'execute') {
+      const userJsCode = stripModuleSyntax(await transformTS(code));
+      let constantsJsCode = '';
+      if (constants) {
+        constantsJsCode = stripModuleSyntax(await transformTS(constants));
+      }
+      const body = [CONSOLE_MOCK, userJsCode, constantsJsCode, 'return __consoleLogs;'].join('\n');
+      const logs = new Function(body)() as ConsoleEntry[];
+      self.postMessage({ type: 'console-result', logs } as WorkerResponse);
+      return;
+    }
+
     if (type !== 'run') return;
+    const { testCode, testCases } = event.data as WorkerRequest & { testCode: string; testCases: unknown[] };
 
     const userJsCode = stripModuleSyntax(await transformTS(code));
 

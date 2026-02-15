@@ -1,19 +1,55 @@
-import { useState } from 'react';
-import { Box, Button, FormControl, MenuItem, Select, Typography } from '@mui/material';
+import { useMemo, useState } from 'react';
+import { Box, CssBaseline } from '@mui/material';
+import { ThemeProvider } from '@mui/material/styles';
 import problems from './problems';
 import { useEditor } from './components/Editor/hooks/useEditor';
 import EditorPanel from './components/Editor/EditorPanel';
 import ResultsPanel from './components/ResultsPanel/ResultsPanel';
-import { loadSelectedProblemId, saveSelectedProblemId } from './services/storage.service';
+import HeaderBar from './components/Header/HeaderBar';
+import {
+  loadSelectedProblemId,
+  saveSelectedProblemId,
+  loadLayoutFlipped,
+  saveLayoutFlipped,
+  loadEditorFontSize,
+  saveEditorFontSize,
+  loadColorMode,
+  saveColorMode,
+} from './services/storage.service';
 import { validateAllProblems } from './utils/problemValidator';
+import { GitHubAuthProvider } from './contexts/GitHubAuthContext';
+import { createAppTheme } from './theme';
 
-export default function App() {
+type AppContentProps = {
+  colorMode: 'dark' | 'light';
+  onColorModeChange: (mode: 'dark' | 'light') => void;
+};
+
+function AppContent({ colorMode, onColorModeChange }: AppContentProps) {
   const [selectedId, setSelectedId] = useState<string>(
     () => loadSelectedProblemId() ?? problems[0].id
   );
+  const [layoutFlipped, setLayoutFlipped] = useState<boolean>(() => loadLayoutFlipped());
+
+  const handleLayoutFlip = (flipped: boolean) => {
+    setLayoutFlipped(flipped);
+    saveLayoutFlipped(flipped);
+  };
+
+  const [editorFontSize, setEditorFontSize] = useState<number>(() => loadEditorFontSize());
+
+  const handleEditorFontSizeChange = (size: number) => {
+    setEditorFontSize(size);
+    saveEditorFontSize(size);
+  };
+
+  const handleColorModeChange = (mode: 'dark' | 'light') => {
+    onColorModeChange(mode);
+    saveColorMode(mode);
+  };
 
   const problem = problems.find((p) => p.id === selectedId) ?? problems[0];
-  const { code, setCode, results, running, run } = useEditor(problem);
+  const { code, setCode, results, running, run, consoleLogs, executing, execute, clearConsoleLogs } = useEditor(problem);
 
   const handleProblemChange = (id: string) => {
     setSelectedId(id);
@@ -43,44 +79,26 @@ export default function App() {
         overflow: 'hidden',
       }}
     >
-      <Box
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 2,
-          px: 2,
-          py: 1,
-          bgcolor: 'background.paper',
-          borderBottom: '1px solid',
-          borderColor: 'divider',
-          flexShrink: 0,
-        }}
-      >
-        <Typography variant="h2">Smart Training</Typography>
-        <FormControl size="small" sx={{ minWidth: 200 }}>
-          <Select
-            value={selectedId}
-            onChange={(e) => handleProblemChange(e.target.value)}
-          >
-            {problems.map((p) => (
-              <MenuItem key={p.id} value={p.id}>
-                {p.quId} - {p.title}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-        {import.meta.env.DEV && (
-          <Button variant="outlined" size="small" onClick={handleValidate}>
-            Validate
-          </Button>
-        )}
-      </Box>
-      <Box sx={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+      <HeaderBar
+        problems={problems}
+        selectedId={selectedId}
+        onProblemChange={handleProblemChange}
+        onValidate={handleValidate}
+        isDev={import.meta.env.DEV}
+        layoutFlipped={layoutFlipped}
+        onLayoutFlip={handleLayoutFlip}
+        editorFontSize={editorFontSize}
+        onEditorFontSizeChange={handleEditorFontSizeChange}
+        colorMode={colorMode}
+        onColorModeChange={handleColorModeChange}
+      />
+      <Box sx={{ display: 'flex', flex: 1, overflow: 'hidden', flexDirection: layoutFlipped ? 'row-reverse' : 'row' }}>
         <Box
           sx={{
             width: '60%',
             height: '100%',
-            borderRight: '1px solid',
+            borderRight: layoutFlipped ? undefined : '1px solid',
+            borderLeft: layoutFlipped ? '1px solid' : undefined,
             borderColor: 'divider',
           }}
         >
@@ -88,8 +106,13 @@ export default function App() {
             problem={problem}
             code={code}
             onCodeChange={setCode}
-            onRun={run}
+            editorFontSize={editorFontSize}
+            run={run}
             running={running}
+            execute={execute}
+            executing={executing}
+            consoleLogs={consoleLogs}
+            clearConsoleLogs={clearConsoleLogs}
           />
         </Box>
         <Box sx={{ width: '40%', height: '100%', overflow: 'hidden' }}>
@@ -97,5 +120,19 @@ export default function App() {
         </Box>
       </Box>
     </Box>
+  );
+}
+
+export default function App() {
+  const [colorMode, setColorMode] = useState<'dark' | 'light'>(() => loadColorMode());
+  const theme = useMemo(() => createAppTheme(colorMode), [colorMode]);
+
+  return (
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <GitHubAuthProvider>
+        <AppContent colorMode={colorMode} onColorModeChange={setColorMode} />
+      </GitHubAuthProvider>
+    </ThemeProvider>
   );
 }
