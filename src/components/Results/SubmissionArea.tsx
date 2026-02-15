@@ -131,9 +131,20 @@ const SubmissionArea = ({ quId, code }: Props) => {
   return (
     <Box sx={{ p: 2, borderTop: '1px solid', borderColor: 'divider' }}>
       {authStatus === 'idle' && (
-        <Button variant="outlined" size="small" onClick={startAuth}>
-          GitHub で認証して提出する
-        </Button>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+          <Typography fontWeight="700">
+            {'GitHub で認証して自分の回答を共有しよう'}
+          </Typography>
+          <Button
+            variant="contained"
+            size="small"
+            color='inherit'
+            onClick={startAuth}
+            startIcon={<img src="/assets/img/GitHub_Invertocat_White.svg" alt="GitHub-icon" style={{ height: 16 }} />}
+          >
+            GitHub で認証する
+          </Button>
+        </Box>
       )}
 
       {authStatus === 'pending' && deviceFlowData && (
