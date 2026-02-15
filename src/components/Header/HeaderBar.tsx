@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import {
   Box,
-  Button,
   FormControl,
   IconButton,
   Menu,
@@ -19,8 +18,6 @@ type Props = {
   problems: Problem[];
   selectedId: string;
   onProblemChange: (id: string) => void;
-  onValidate?: () => void;
-  isDev?: boolean;
   layoutFlipped: boolean;
   onLayoutFlip: (flipped: boolean) => void;
   editorFontSize: number;
@@ -35,8 +32,6 @@ type Props = {
  * @param problems - List of available problems.
  * @param selectedId - Currently selected problem ID.
  * @param onProblemChange - Callback when problem selection changes.
- * @param onValidate - Callback for DEV-only validate action.
- * @param isDev - Whether running in development mode.
  * @param layoutFlipped - Whether the editor and results panel are flipped.
  * @param onLayoutFlip - Callback when the layout flip preference changes.
  * @param editorFontSize - Current editor font size in pixels.
@@ -48,8 +43,6 @@ export default function HeaderBar({
   problems,
   selectedId,
   onProblemChange,
-  onValidate,
-  isDev,
   layoutFlipped,
   onLayoutFlip,
   editorFontSize,
@@ -103,12 +96,6 @@ export default function HeaderBar({
             ))}
           </Select>
         </FormControl>
-        {isDev && onValidate && (
-          <Button variant="outlined" size="small" onClick={onValidate}>
-            Validate
-          </Button>
-        )}
-
         <Box sx={{ ml: 'auto', display: 'flex', alignItems: 'center', gap: 1 }}>
           {githubUser && (
             <Typography variant="body2" color="text.secondary">

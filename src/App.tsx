@@ -16,7 +16,6 @@ import {
   loadColorMode,
   saveColorMode,
 } from './services/storage.service';
-import { validateAllProblems } from './utils/problemValidator';
 import { GitHubAuthProvider } from './contexts/GitHubAuthContext';
 import { createAppTheme } from './theme';
 
@@ -56,19 +55,6 @@ function AppContent({ colorMode, onColorModeChange }: AppContentProps) {
     saveSelectedProblemId(id);
   };
 
-  const handleValidate = () => {
-    const validationResults = validateAllProblems(problems);
-    const report = validationResults
-      .map((r) =>
-        r.valid
-          ? `[OK] ${r.id}`
-          : `[FAIL] ${r.id}\n${r.errors.map((e) => `  - ${e}`).join('\n')}`
-      )
-      .join('\n');
-    console.log('=== Problem Validation ===\n' + report);
-    alert('=== Problem Validation ===\n' + report);
-  };
-
   return (
     <Box
       sx={{
@@ -83,8 +69,6 @@ function AppContent({ colorMode, onColorModeChange }: AppContentProps) {
         problems={problems}
         selectedId={selectedId}
         onProblemChange={handleProblemChange}
-        onValidate={handleValidate}
-        isDev={import.meta.env.DEV}
         layoutFlipped={layoutFlipped}
         onLayoutFlip={handleLayoutFlip}
         editorFontSize={editorFontSize}
