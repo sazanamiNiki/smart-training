@@ -13,7 +13,7 @@ const DESCRIPTION_TAB = 0;
 const RESULT_TAB = 1;
 const COMMUNITY_TAB = 2;
 
-export default function ResultsPanel({ problem, results, running }: ResultsPanelProps) {
+export default function ResultsPanel({ problem, results, running, code }: ResultsPanelProps) {
   const [tab, setTab] = useState(DESCRIPTION_TAB);
   const [constantsOpen, setConstantsOpen] = useState(true);
 
@@ -104,7 +104,7 @@ export default function ResultsPanel({ problem, results, running }: ResultsPanel
       )}
 
       {tab === RESULT_TAB && (
-        <Results running={running} results={results} />
+        <Results running={running} results={results} code={code} quId={problem.quId} />
       )}
 
       {tab === COMMUNITY_TAB && (

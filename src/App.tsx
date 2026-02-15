@@ -93,7 +93,7 @@ export default function App() {
           />
         </Box>
         <Box sx={{ width: '40%', height: '100%', overflow: 'hidden' }}>
-          <ResultsPanel problem={problem} results={results} running={running} />
+          <ResultsPanel problem={problem} results={results} running={running} code={code} />
         </Box>
       </Box>
     </Box>

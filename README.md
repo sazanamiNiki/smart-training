@@ -103,3 +103,47 @@ npm test
 ```sh
 npm run build
 ```
+
+## 提出フロー
+
+全テストケース通過後に提出エリアが表示される。以下の順で処理が進む。
+
+### 1. GitHub Device Flow 認証（フロントエンド）
+
+1. 「GitHub で認証して提出する」をクリック
+2. フロントエンドが `POST /login/device/code` をプロキシ経由で GitHub に送信
+3. 返却された `user_code` と `verification_uri` を画面に表示
+4. ユーザーが `verification_uri`（`github.com/login/device`）を開き `user_code` を入力
+5. フロントエンドが `POST /login/oauth/access_token` をポーリングして User Access Token（`ghu_` プレフィックス）を取得
+6. Octokit で `GET /user` を呼び出してユーザー名を取得
+7. Token とユーザー名を `localStorage` に保存し、認証済み状態へ遷移
+
+### 2. 解法説明の入力と提出
+
+1. 認証済み状態で解法説明（Markdown）を入力し「提出する」をクリック
+2. フロントエンドが Cloudflare Worker に `POST /submit` を送信
+   - ヘッダー: `Authorization: Bearer <user_token>`
+   - ボディ: `{ quId, code, description }`
+
+### 3. Worker によるバックエンド処理
+
+```
+POST /submit (Cloudflare Worker)
+│
+├── Authorization ヘッダーから User Access Token を取得
+├── GET /user          → GitHub ユーザー名 (login) を取得・認証確認
+├── GET /user/emails   → verified メールアドレスを取得
+├── ALLOWED_EMAIL_DOMAIN との一致検証（不一致 → 403）
+│
+├── GitHub App JWT 生成（PKCS#8 秘密鍵 + Web Crypto RS256）
+├── POST /app/installations/{id}/access_tokens → Installation Token 取得
+│
+├── PUT /repos/.../contents/static/{quId}/{login}/execute.ts   （コード）
+└── PUT /repos/.../contents/static/{quId}/{login}/description.md（説明）
+```
+
+### 4. 完了
+
+- Worker が `{ success: true }` を返却
+- 画面に `static/{quId}/{githubUser}/` のパスを表示
+- リポジトリの `GITHUB_TARGET_BRANCH` ブランチに2ファイルがコミットされる
