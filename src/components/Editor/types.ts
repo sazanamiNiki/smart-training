@@ -1,10 +1,14 @@
-import type { Problem } from '../../types';
+import type { Problem, ConsoleEntry } from '../../types';
 
 export interface EditorPanelProps {
   problem: Problem;
   code: string;
   onCodeChange: (code: string) => void;
-  onRun: () => void;
-  running: boolean;
   editorFontSize: number;
+  run: () => void;
+  running: boolean;
+  execute: () => void;
+  executing: boolean;
+  consoleLogs: ConsoleEntry[];
+  clearConsoleLogs: () => void;
 }

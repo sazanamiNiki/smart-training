@@ -74,6 +74,10 @@ export default function AnswerItem({ answer }: AnswerItemProps) {
               fontSize: 13,
               folding: false,
               contextmenu: false,
+              padding: {
+                top: 8,
+                bottom: 8
+              },
             }}
           />
         </Box>
