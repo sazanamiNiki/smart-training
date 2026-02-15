@@ -29,7 +29,7 @@ const checkEncrypt = (cardNumbers: Array<number>): cardNumbers is Array<Key> => 
  * @param key Key デコードキー
  * @returns 判定結果
  */
-const decryptAndValidate = (cardNumbers: Array<number>, key: Key): boolean => {
+const decryptAndValidate = (key: Key, cardNumbers: Array<number>): boolean => {
   if (!checkEncrypt(cardNumbers)) {
     throw new TypeError('暗号化が正しくされていません。');
   }

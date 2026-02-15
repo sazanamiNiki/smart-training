@@ -1,6 +1,7 @@
 import type { ProblemMeta } from '../../../src/types';
 
 export const meta: ProblemMeta = {
+  quId: '1',
   id: 'pokerHand',
   title: 'ポーカーハンド役判定',
   mode: 'create',

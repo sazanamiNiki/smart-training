@@ -1,6 +1,7 @@
 import type { ProblemMeta } from '../../../src/types';
 
 export const meta: ProblemMeta = {
+  quId: '3',
   id: 'Cracking-the-vigenere-cipher',
   title: 'ヴィジュネル暗号の解読',
   mode: 'create',

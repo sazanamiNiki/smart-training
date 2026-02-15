@@ -23,6 +23,13 @@ export const Results = ({ running, results, code, quId }: Props) => {
     );
   };
 
+  const stringifyWrapper = (obj: Object) => {
+    return JSON.stringify(obj, (_, value) => {
+      return value === undefined ? 'undefined' : value;
+    });
+  };
+  
+
   return (
     <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
       {running ? (
@@ -87,19 +94,24 @@ export const Results = ({ running, results, code, quId }: Props) => {
                       >
                         <Typography variant="body2" sx={{ fontFamily: 'monospace', lineHeight: 2 }}>
                           <Box component="span" sx={{ color: 'text.primary', mr: 1 }}>Input:</Box>
-                          <Box component="span" sx={{ color: 'text.secondary' }}>{JSON.stringify(result.input)}</Box>
+                          <Box component="span" sx={{ color: 'text.secondary' }}>{stringifyWrapper(result.input)}</Box>
                         </Typography>
                         <Typography variant="body2" sx={{ fontFamily: 'monospace', lineHeight: 2 }}>
                           <Box component="span" sx={{ color: 'text.primary', mr: 1 }}>Expected:</Box>
-                          <Box component="span" sx={{ color: 'text.secondary' }}>{JSON.stringify(result.expected)}</Box>
+                          <Box component="span" sx={{ color: 'text.secondary' }}>{stringifyWrapper(result.expected as Object)}</Box>
                         </Typography>
                         <Typography variant="body2" sx={{ fontFamily: 'monospace', lineHeight: 2 }}>
                           <Box component="span" sx={{ color: 'text.primary', mr: 1 }}>Actual:</Box>
-                          <Box component="span" sx={{ color: 'text.secondary' }}>{result.error ?? JSON.stringify(result.actual)}</Box>
+                          <Box component="span" sx={{ color: 'text.secondary' }}>{stringifyWrapper(result.actual as Object)}</Box>
                         </Typography>
                         {result.error && (
                           <Typography variant="body2" sx={{ fontFamily: 'monospace', color: 'error.main', mt: 0.5 }}>
                             Error: {result.error}
+                          </Typography>
+                        )}
+                        {!result.error && result.reason && (
+                          <Typography variant="body2" sx={{ fontFamily: 'monospace', color: 'warning.main', mt: 0.5 }}>
+                            Reason: {result.reason}
                           </Typography>
                         )}
                       </Box>

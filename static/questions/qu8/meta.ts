@@ -1,6 +1,7 @@
 import type { ProblemMeta } from '../../../src/types';
 
 export const meta: ProblemMeta = {
+  quId: '8',
   id: 'flat-path',
   title: 'フラットなパスからのファイルシステム復元（エラー収集モード） 🌳',
   mode: 'create',

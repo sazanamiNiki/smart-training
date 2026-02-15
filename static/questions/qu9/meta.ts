@@ -1,6 +1,7 @@
 import type { ProblemMeta } from '../../../src/types';
 
 export const meta: ProblemMeta = {
+  quId: '9',
   id: 'text-justification',
   title: 'テキストの均等割り付け  📰',
   mode: 'create',

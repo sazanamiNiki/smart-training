@@ -1,6 +1,7 @@
 import type { ProblemMeta } from '../../../src/types';
 
 export const meta: ProblemMeta = {
+  quId: '4',
   id: 'sudoku-checker',
   title: '数独チェッカー 🔢',
   mode: 'create',

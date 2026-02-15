@@ -10,6 +10,7 @@ export interface ProblemMeta {
 export interface Problem extends ProblemMeta {
   readme: string;
   initialCode: string;
+  testCode: string;
   testCases: TestCase[];
   constants?: string;
 }
@@ -27,6 +28,7 @@ export interface TestResult {
   actual: unknown;
   passed: boolean;
   error?: string;
+  reason?: string;
 }
 
 export interface SessionState {
@@ -37,6 +39,7 @@ export interface SessionState {
 export interface RunMessage {
   type: 'run';
   code: string;
+  testCode: string;
   testCases: TestCase[];
   functionName: string;
   constants?: string;

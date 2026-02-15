@@ -1,6 +1,7 @@
 import type { ProblemMeta } from '../../../src/types';
 
 export const meta: ProblemMeta = {
+  quId: '2',
   id: 'bowling-score',
   title: 'ボウリングスコアボード計算 ',
   mode: 'create',

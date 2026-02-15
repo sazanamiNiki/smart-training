@@ -3,76 +3,57 @@ import  { targetsOnlyC, targetsOnlyIsActive, targetsOnlyDeletedAt, targetsOnlyMe
 export const testCases = [
   {
     name: 'HTTPS形式: 複数の型が見つかるケース',
-    rawData: HTTPS_DATA_FULL_EXAMPLE,
-    targets: targetsExtended,
-    expected: {
-      id: 1,
-      secret: "******gh",
-      ssn: "*********",
-      isActive: true,
-      metadata: { tags: ["a"] },
-      deletedAt: null,
-      zipcode: undefined
-    },
+    input: [HTTPS_DATA_FULL_EXAMPLE, targetsExtended],
+    expected: { id: 1, secret: "******gh", ssn: "*********", isActive: true, metadata: { tags: ["a"] }, deletedAt: null, zipcode: undefined },
   },
-    {
+  {
     name: 'HTTPS形式: secret(マスクあり)とid(マスクなし)が見つかる',
-    rawData: HTTPS_DATA_SECRET_FIRST,
-    targets: targetsStandard,
+    input: [HTTPS_DATA_SECRET_FIRST, targetsStandard],
     expected: { ssn: undefined, password: undefined, secret: "******gh", id: 456 },
   },
   {
     name: 'HTTPS形式: ネストしたキー(c)が見つかる',
-    rawData: HTTPS_DATA_NESTED_C,
-    targets: targetsOnlyC,
+    input: [HTTPS_DATA_NESTED_C, targetsOnlyC],
     expected: { c: "nested" },
   },
-    {
+  {
     name: 'HTTPS形式: 真偽値はマスクされない',
-    rawData: HTTPS_DATA_BOOLEAN,
-    targets: targetsOnlyIsActive,
+    input: [HTTPS_DATA_BOOLEAN, targetsOnlyIsActive],
     expected: { isActive: true },
   },
   {
     name: 'HTTPS形式: Null値はマスクされない',
-    rawData: HTTPS_DATA_NULL,
-    targets: targetsOnlyDeletedAt,
+    input: [HTTPS_DATA_NULL, targetsOnlyDeletedAt],
     expected: { deletedAt: null },
   },
   {
     name: 'HTTPS形式: オブジェクトはマスクされない',
-    rawData: HTTPS_DATA_OBJECT,
-    targets: targetsOnlyMetadata,
+    input: [HTTPS_DATA_OBJECT, targetsOnlyMetadata],
     expected: { metadata: { version: 1 } },
   },
   {
     name: 'HTTPS形式: targetsのキーが見つからない',
-    rawData: HTTPS_DATA_NOT_FOUND,
-    targets: targetsStandard,
+    input: [HTTPS_DATA_NOT_FOUND, targetsStandard],
     expected: { ssn: undefined, password: undefined, secret: undefined, id: undefined },
   },
   {
     name: 'HTTPS形式: 入力配列が空',
-    rawData: HTTPS_DATA_EMPTY_ARRAY,
-    targets: targetsStandard,
+    input: [HTTPS_DATA_EMPTY_ARRAY, targetsStandard],
     expected: { ssn: undefined, password: undefined, secret: undefined, id: undefined },
   },
   {
     name: 'HTTPS形式: 不正なJSON文字列が含まれる',
-    rawData: HTTPS_DATA_INVALID_JSON,
-    targets: targetsOnlyId,
+    input: [HTTPS_DATA_INVALID_JSON, targetsOnlyId],
     expected: { id: 1 },
   },
-    {
+  {
     name: 'マスク率50%のテスト (切り上げ)',
-    rawData: HTTPS_DATA_SECRET_SIX_CHARS,
-    targets: targetsOnlySecretHalfMask,
+    input: [HTTPS_DATA_SECRET_SIX_CHARS, targetsOnlySecretHalfMask],
     expected: { secret: "***456" },
   },
   {
     name: 'SSE形式: id(数値)とssn(マスクあり)が見つかる',
-    rawData: SSE_DATA_SSN_ID,
-    targets: targetsExtended,
+    input: [SSE_DATA_SSN_ID, targetsExtended],
     expected: {
       id: 999,
       secret: undefined,
@@ -85,20 +66,17 @@ export const testCases = [
   },
   {
     name: 'SSE形式: 入力配列の要素が空文字列',
-    rawData: SSE_DATA_EMPTY_STRING_IN_ARRAY,
-    targets: targetsStandard,
+    input: [SSE_DATA_EMPTY_STRING_IN_ARRAY, targetsStandard],
     expected: { ssn: undefined, password: undefined, secret: undefined, id: undefined },
   },
   {
     name: 'SSE形式: dataプレフィックスがない不正な形式',
-    rawData: SSE_DATA_NO_DATA_PREFIX,
-    targets: targetsOnlyId,
+    input: [SSE_DATA_NO_DATA_PREFIX, targetsOnlyId],
     expected: { id: 1 },
   },
   {
     name: 'SSE形式: 不正なJSONが含まれる',
-    rawData: SSE_DATA_INVALID_JSON,
-    targets: targetsOnlyId,
+    input: [SSE_DATA_INVALID_JSON, targetsOnlyId],
     expected: { id: undefined },
   },
 ];
