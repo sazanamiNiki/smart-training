@@ -1,13 +1,15 @@
 import { useState } from 'react';
-import { Box, Button, FormControl, MenuItem, Select, Typography } from '@mui/material';
+import { Box } from '@mui/material';
 import problems from './problems';
 import { useEditor } from './components/Editor/hooks/useEditor';
 import EditorPanel from './components/Editor/EditorPanel';
 import ResultsPanel from './components/ResultsPanel/ResultsPanel';
+import HeaderBar from './components/Header/HeaderBar';
 import { loadSelectedProblemId, saveSelectedProblemId } from './services/storage.service';
 import { validateAllProblems } from './utils/problemValidator';
+import { GitHubAuthProvider } from './contexts/GitHubAuthContext';
 
-export default function App() {
+function AppContent() {
   const [selectedId, setSelectedId] = useState<string>(
     () => loadSelectedProblemId() ?? problems[0].id
   );
@@ -43,38 +45,13 @@ export default function App() {
         overflow: 'hidden',
       }}
     >
-      <Box
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 2,
-          px: 2,
-          py: 1,
-          bgcolor: 'background.paper',
-          borderBottom: '1px solid',
-          borderColor: 'divider',
-          flexShrink: 0,
-        }}
-      >
-        <Typography variant="h2">Smart Training</Typography>
-        <FormControl size="small" sx={{ minWidth: 200 }}>
-          <Select
-            value={selectedId}
-            onChange={(e) => handleProblemChange(e.target.value)}
-          >
-            {problems.map((p) => (
-              <MenuItem key={p.id} value={p.id}>
-                {p.quId} - {p.title}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-        {import.meta.env.DEV && (
-          <Button variant="outlined" size="small" onClick={handleValidate}>
-            Validate
-          </Button>
-        )}
-      </Box>
+      <HeaderBar
+        problems={problems}
+        selectedId={selectedId}
+        onProblemChange={handleProblemChange}
+        onValidate={handleValidate}
+        isDev={import.meta.env.DEV}
+      />
       <Box sx={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
         <Box
           sx={{
@@ -97,5 +74,13 @@ export default function App() {
         </Box>
       </Box>
     </Box>
+  );
+}
+
+export default function App() {
+  return (
+    <GitHubAuthProvider>
+      <AppContent />
+    </GitHubAuthProvider>
   );
 }
