@@ -12,6 +12,7 @@ export default [
       'node_modules/**',
       '.expo/**',
       'dist/**',
+      'static/*',
       'build/**',
       '*.config.js',
       '*.config.mjs',
