@@ -1,5 +1,6 @@
-import { useState } from 'react';
-import { Box } from '@mui/material';
+import { useMemo, useState } from 'react';
+import { Box, CssBaseline } from '@mui/material';
+import { ThemeProvider } from '@mui/material/styles';
 import problems from './problems';
 import { useEditor } from './components/Editor/hooks/useEditor';
 import EditorPanel from './components/Editor/EditorPanel';
@@ -12,11 +13,19 @@ import {
   saveLayoutFlipped,
   loadEditorFontSize,
   saveEditorFontSize,
+  loadColorMode,
+  saveColorMode,
 } from './services/storage.service';
 import { validateAllProblems } from './utils/problemValidator';
 import { GitHubAuthProvider } from './contexts/GitHubAuthContext';
+import { createAppTheme } from './theme';
 
-function AppContent() {
+type AppContentProps = {
+  colorMode: 'dark' | 'light';
+  onColorModeChange: (mode: 'dark' | 'light') => void;
+};
+
+function AppContent({ colorMode, onColorModeChange }: AppContentProps) {
   const [selectedId, setSelectedId] = useState<string>(
     () => loadSelectedProblemId() ?? problems[0].id
   );
@@ -32,6 +41,11 @@ function AppContent() {
   const handleEditorFontSizeChange = (size: number) => {
     setEditorFontSize(size);
     saveEditorFontSize(size);
+  };
+
+  const handleColorModeChange = (mode: 'dark' | 'light') => {
+    onColorModeChange(mode);
+    saveColorMode(mode);
   };
 
   const problem = problems.find((p) => p.id === selectedId) ?? problems[0];
@@ -75,6 +89,8 @@ function AppContent() {
         onLayoutFlip={handleLayoutFlip}
         editorFontSize={editorFontSize}
         onEditorFontSizeChange={handleEditorFontSizeChange}
+        colorMode={colorMode}
+        onColorModeChange={handleColorModeChange}
       />
       <Box sx={{ display: 'flex', flex: 1, overflow: 'hidden', flexDirection: layoutFlipped ? 'row-reverse' : 'row' }}>
         <Box
@@ -104,9 +120,15 @@ function AppContent() {
 }
 
 export default function App() {
+  const [colorMode, setColorMode] = useState<'dark' | 'light'>(() => loadColorMode());
+  const theme = useMemo(() => createAppTheme(colorMode), [colorMode]);
+
   return (
-    <GitHubAuthProvider>
-      <AppContent />
-    </GitHubAuthProvider>
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <GitHubAuthProvider>
+        <AppContent colorMode={colorMode} onColorModeChange={setColorMode} />
+      </GitHubAuthProvider>
+    </ThemeProvider>
   );
 }

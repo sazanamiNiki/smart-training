@@ -43,6 +43,7 @@ export function loadSelectedProblemId(): string | null {
 const LAYOUT_FLIP_KEY = 'smart-training:layout_flipped';
 const EDITOR_FONT_SIZE_KEY = 'smart-training:editor_font_size';
 const DEFAULT_EDITOR_FONT_SIZE = 14;
+const COLOR_MODE_KEY = 'smart-training:color_mode';
 
 /** Save layout flip preference to localStorage. */
 export function saveLayoutFlipped(flipped: boolean): void {
@@ -81,6 +82,26 @@ export function loadLayoutFlipped(): boolean {
     return JSON.parse(raw) as boolean;
   } catch {
     return false;
+  }
+}
+
+/** Save color mode preference to localStorage. */
+export function saveColorMode(mode: 'dark' | 'light'): void {
+  try {
+    localStorage.setItem(COLOR_MODE_KEY, mode);
+  } catch {
+    // noop
+  }
+}
+
+/** Load color mode preference from localStorage. */
+export function loadColorMode(): 'dark' | 'light' {
+  try {
+    const raw = localStorage.getItem(COLOR_MODE_KEY);
+    if (raw === 'light' || raw === 'dark') return raw;
+    return 'dark';
+  } catch {
+    return 'dark';
   }
 }
 

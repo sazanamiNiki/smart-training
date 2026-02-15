@@ -25,6 +25,8 @@ type Props = {
   onLayoutFlip: (flipped: boolean) => void;
   editorFontSize: number;
   onEditorFontSizeChange: (size: number) => void;
+  colorMode: 'dark' | 'light';
+  onColorModeChange: (mode: 'dark' | 'light') => void;
 };
 
 /**
@@ -39,6 +41,8 @@ type Props = {
  * @param onLayoutFlip - Callback when the layout flip preference changes.
  * @param editorFontSize - Current editor font size in pixels.
  * @param onEditorFontSizeChange - Callback when the editor font size changes.
+ * @param colorMode - Current color mode ('dark' or 'light').
+ * @param onColorModeChange - Callback when the color mode changes.
  */
 export default function HeaderBar({
   problems,
@@ -50,6 +54,8 @@ export default function HeaderBar({
   onLayoutFlip,
   editorFontSize,
   onEditorFontSizeChange,
+  colorMode,
+  onColorModeChange,
 }: Props) {
   const { githubUser } = useGitHubAuth();
   const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
@@ -134,6 +140,8 @@ export default function HeaderBar({
         onLayoutFlip={onLayoutFlip}
         editorFontSize={editorFontSize}
         onEditorFontSizeChange={onEditorFontSizeChange}
+        colorMode={colorMode}
+        onColorModeChange={onColorModeChange}
       />
     </>
   );

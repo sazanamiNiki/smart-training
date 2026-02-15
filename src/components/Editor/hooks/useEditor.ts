@@ -34,7 +34,7 @@ export function useEditor(problem: Problem): UseEditorReturn {
     const saved = loadProblemCode(problem.id);
     setCodeState(saved ?? problem.initialCode);
     setResults([]);
-  }, [problem]);
+  }, [problem.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const setCode = (newCode: string) => {
     setCodeState(newCode);
