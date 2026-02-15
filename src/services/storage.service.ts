@@ -40,6 +40,50 @@ export function loadSelectedProblemId(): string | null {
   return loadSession()?.selectedProblemId ?? null;
 }
 
+const LAYOUT_FLIP_KEY = 'smart-training:layout_flipped';
+const EDITOR_FONT_SIZE_KEY = 'smart-training:editor_font_size';
+const DEFAULT_EDITOR_FONT_SIZE = 14;
+
+/** Save layout flip preference to localStorage. */
+export function saveLayoutFlipped(flipped: boolean): void {
+  try {
+    localStorage.setItem(LAYOUT_FLIP_KEY, JSON.stringify(flipped));
+  } catch {
+    // noop
+  }
+}
+
+/** Save editor font size preference to localStorage. */
+export function saveEditorFontSize(size: number): void {
+  try {
+    localStorage.setItem(EDITOR_FONT_SIZE_KEY, JSON.stringify(size));
+  } catch {
+    // noop
+  }
+}
+
+/** Load editor font size preference from localStorage. */
+export function loadEditorFontSize(): number {
+  try {
+    const raw = localStorage.getItem(EDITOR_FONT_SIZE_KEY);
+    if (!raw) return DEFAULT_EDITOR_FONT_SIZE;
+    return JSON.parse(raw) as number;
+  } catch {
+    return DEFAULT_EDITOR_FONT_SIZE;
+  }
+}
+
+/** Load layout flip preference from localStorage. */
+export function loadLayoutFlipped(): boolean {
+  try {
+    const raw = localStorage.getItem(LAYOUT_FLIP_KEY);
+    if (!raw) return false;
+    return JSON.parse(raw) as boolean;
+  } catch {
+    return false;
+  }
+}
+
 const GITHUB_TOKEN_KEY = 'smart-training:github_token';
 const GITHUB_USER_KEY = 'smart-training:github_user';
 

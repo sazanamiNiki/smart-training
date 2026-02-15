@@ -5,7 +5,14 @@ import { useEditor } from './components/Editor/hooks/useEditor';
 import EditorPanel from './components/Editor/EditorPanel';
 import ResultsPanel from './components/ResultsPanel/ResultsPanel';
 import HeaderBar from './components/Header/HeaderBar';
-import { loadSelectedProblemId, saveSelectedProblemId } from './services/storage.service';
+import {
+  loadSelectedProblemId,
+  saveSelectedProblemId,
+  loadLayoutFlipped,
+  saveLayoutFlipped,
+  loadEditorFontSize,
+  saveEditorFontSize,
+} from './services/storage.service';
 import { validateAllProblems } from './utils/problemValidator';
 import { GitHubAuthProvider } from './contexts/GitHubAuthContext';
 
@@ -13,6 +20,19 @@ function AppContent() {
   const [selectedId, setSelectedId] = useState<string>(
     () => loadSelectedProblemId() ?? problems[0].id
   );
+  const [layoutFlipped, setLayoutFlipped] = useState<boolean>(() => loadLayoutFlipped());
+
+  const handleLayoutFlip = (flipped: boolean) => {
+    setLayoutFlipped(flipped);
+    saveLayoutFlipped(flipped);
+  };
+
+  const [editorFontSize, setEditorFontSize] = useState<number>(() => loadEditorFontSize());
+
+  const handleEditorFontSizeChange = (size: number) => {
+    setEditorFontSize(size);
+    saveEditorFontSize(size);
+  };
 
   const problem = problems.find((p) => p.id === selectedId) ?? problems[0];
   const { code, setCode, results, running, run } = useEditor(problem);
@@ -51,13 +71,18 @@ function AppContent() {
         onProblemChange={handleProblemChange}
         onValidate={handleValidate}
         isDev={import.meta.env.DEV}
+        layoutFlipped={layoutFlipped}
+        onLayoutFlip={handleLayoutFlip}
+        editorFontSize={editorFontSize}
+        onEditorFontSizeChange={handleEditorFontSizeChange}
       />
-      <Box sx={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+      <Box sx={{ display: 'flex', flex: 1, overflow: 'hidden', flexDirection: layoutFlipped ? 'row-reverse' : 'row' }}>
         <Box
           sx={{
             width: '60%',
             height: '100%',
-            borderRight: '1px solid',
+            borderRight: layoutFlipped ? undefined : '1px solid',
+            borderLeft: layoutFlipped ? '1px solid' : undefined,
             borderColor: 'divider',
           }}
         >
@@ -67,6 +92,7 @@ function AppContent() {
             onCodeChange={setCode}
             onRun={run}
             running={running}
+            editorFontSize={editorFontSize}
           />
         </Box>
         <Box sx={{ width: '40%', height: '100%', overflow: 'hidden' }}>

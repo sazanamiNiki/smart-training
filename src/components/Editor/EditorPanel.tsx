@@ -9,6 +9,7 @@ export default function EditorPanel({
   onCodeChange,
   onRun,
   running,
+  editorFontSize,
 }: EditorPanelProps) {
   const monaco = useMonaco();
   const libRef = useRef<{ dispose(): void } | null>(null);
@@ -65,7 +66,7 @@ export default function EditorPanel({
           value={code}
           onChange={(value) => onCodeChange(value ?? '')}
           options={{
-            fontSize: 14,
+            fontSize: editorFontSize,
             minimap: { enabled: false },
             scrollBeyondLastLine: false,
             lineNumbers: 'on',

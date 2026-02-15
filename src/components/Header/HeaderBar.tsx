@@ -13,6 +13,7 @@ import MoreVertIcon from '@mui/icons-material/MoreVert';
 import type { Problem } from '../../types';
 import { useGitHubAuth } from '../../contexts/GitHubAuthContext';
 import InquiryDialog from './InquiryDialog';
+import SettingsDialog from './SettingsDialog';
 
 type Props = {
   problems: Problem[];
@@ -20,6 +21,10 @@ type Props = {
   onProblemChange: (id: string) => void;
   onValidate?: () => void;
   isDev?: boolean;
+  layoutFlipped: boolean;
+  onLayoutFlip: (flipped: boolean) => void;
+  editorFontSize: number;
+  onEditorFontSizeChange: (size: number) => void;
 };
 
 /**
@@ -30,6 +35,10 @@ type Props = {
  * @param onProblemChange - Callback when problem selection changes.
  * @param onValidate - Callback for DEV-only validate action.
  * @param isDev - Whether running in development mode.
+ * @param layoutFlipped - Whether the editor and results panel are flipped.
+ * @param onLayoutFlip - Callback when the layout flip preference changes.
+ * @param editorFontSize - Current editor font size in pixels.
+ * @param onEditorFontSizeChange - Callback when the editor font size changes.
  */
 export default function HeaderBar({
   problems,
@@ -37,10 +46,15 @@ export default function HeaderBar({
   onProblemChange,
   onValidate,
   isDev,
+  layoutFlipped,
+  onLayoutFlip,
+  editorFontSize,
+  onEditorFontSizeChange,
 }: Props) {
   const { githubUser } = useGitHubAuth();
   const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
   const [inquiryOpen, setInquiryOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   const openMenu = (e: React.MouseEvent<HTMLElement>) => setMenuAnchor(e.currentTarget);
   const closeMenu = () => setMenuAnchor(null);
@@ -52,6 +66,7 @@ export default function HeaderBar({
 
   const handleSettings = () => {
     closeMenu();
+    setSettingsOpen(true);
   };
 
   return (
@@ -112,6 +127,14 @@ export default function HeaderBar({
       </Box>
 
       <InquiryDialog open={inquiryOpen} onClose={() => setInquiryOpen(false)} />
+      <SettingsDialog
+        open={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
+        layoutFlipped={layoutFlipped}
+        onLayoutFlip={onLayoutFlip}
+        editorFontSize={editorFontSize}
+        onEditorFontSizeChange={onEditorFontSizeChange}
+      />
     </>
   );
 }

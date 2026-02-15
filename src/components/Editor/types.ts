@@ -6,4 +6,5 @@ export interface EditorPanelProps {
   onCodeChange: (code: string) => void;
   onRun: () => void;
   running: boolean;
+  editorFontSize: number;
 }
