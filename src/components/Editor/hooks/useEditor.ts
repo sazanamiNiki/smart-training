@@ -58,6 +58,7 @@ export function useEditor(problem: Problem): UseEditorReturn {
         setResults([
           {
             input: [],
+            name: '',
             expected: undefined,
             actual: undefined,
             passed: false,

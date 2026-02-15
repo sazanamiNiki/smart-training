@@ -35,6 +35,9 @@ jobs:
         run: echo "BASE_PATH=/${{ github.event.repository.name }}/dev/" >> $GITHUB_ENV
 
       - run: npm run build
+        env:
+          VITE_GITHUB_CLIENT_ID: ${{ secrets.VITE_GITHUB_CLIENT_ID }}
+          VITE_GITHUB_PROXY_URL: ${{ secrets.VITE_GITHUB_PROXY_URL }}
 
       - name: Deploy main to root
         if: github.ref == 'refs/heads/main'

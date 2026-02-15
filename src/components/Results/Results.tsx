@@ -1,17 +1,20 @@
-import { Box, CircularProgress, Typography, List, ListItem, ListItemText, ListItemButton, Collapse, Divider } from "@mui/material";
+import { Box, CircularProgress, Typography, List, ListItemText, ListItemButton, Collapse, Divider } from "@mui/material";
 import ExpandLess from '@mui/icons-material/ExpandLess';
 import ExpandMore from '@mui/icons-material/ExpandMore';
 import { TestResult } from "../../types";
-
+import SubmissionArea from './SubmissionArea';
 
 import { useState } from "react";
 
 type Props = {
   running: boolean;
   results: TestResult[];
+  code: string;
+  quId: string;
 };
 
-export const Results = ({ running, results }: Props) => {
+export const Results = ({ running, results, code, quId }: Props) => {
+  const allPassed = results.length > 0 && results.every((r) => r.passed);
   const [openIndexes, setOpenIndexes] = useState<number[]>([]);
 
   const handleToggle = (idx: number) => {
@@ -70,6 +73,7 @@ export const Results = ({ running, results }: Props) => {
               );
             })}
           </List>
+          {allPassed && <SubmissionArea quId={quId} code={code} />}
         </>
       )}
     </Box>

@@ -4,4 +4,5 @@ export interface ResultsPanelProps {
   problem: Problem;
   results: TestResult[];
   running: boolean;
+  code: string;
 }
