@@ -1,12 +1,16 @@
 import { styled } from '@mui/material/styles';
 import { Box } from '@mui/material';
 
-export const MarkdownWrapper = styled(Box)(({ theme }) => ({
+type Props = {
+  height?: string;
+}
+
+export const MarkdownWrapper = styled(Box)<Props>(({ theme, height }) => ({
   lineHeight: 1.6,
   wordWrap: 'break-word',
   fontSize: '1rem',
   color: theme.palette.text.primary,
-  height: '65%',
+  height: height ?? '65%',
   overflow: 'auto',
   '& h1, & h2, & h3': {
     marginTop: theme.spacing(3),

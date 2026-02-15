@@ -1,4 +1,4 @@
-import { Box, CircularProgress, Typography, List, ListItemText, ListItemButton, Collapse, Divider } from "@mui/material";
+import { Box, CircularProgress, Typography, List, ListItemButton, Collapse, Divider } from "@mui/material";
 import ExpandLess from '@mui/icons-material/ExpandLess';
 import ExpandMore from '@mui/icons-material/ExpandMore';
 import { TestResult } from "../../types";
@@ -24,7 +24,7 @@ export const Results = ({ running, results, code, quId }: Props) => {
   };
 
   return (
-    <Box sx={{ flex: 1, overflow: 'auto' }}>
+    <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
       {running ? (
         <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
           <CircularProgress size={24} />
@@ -37,42 +37,79 @@ export const Results = ({ running, results, code, quId }: Props) => {
         </Box>
       ) : (
         <>
-          <Box sx={{ px: 2, py: 1, borderBottom: '1px solid', borderColor: 'divider' }}>
+          <Box sx={{ px: 2, py: 1, borderBottom: '1px solid', borderColor: 'divider', flexShrink: 0 }}>
             <Typography variant="body2">
               {results.filter((r) => r.passed).length} / {results.length} passed
             </Typography>
           </Box>
-          <List>
-            {results.map((result, i) => {
-              const open = openIndexes.includes(i);
-              return (
-                <Box key={i}>
-                  <ListItemButton onClick={() => handleToggle(i)}>
-                    <ListItemText
-                      primary={`#${i + 1} : ${result.name} `}
-                      secondaryTypographyProps={{
-                        color: result.passed ? 'success.main' : 'error.main',
-                        fontWeight: result.passed ? 500 : 700,
-                      }}
-                      secondary={open ? undefined : `Reslut: ${result.passed ? 'PASS' : 'FAIL'}`}
-                    />
-                    {open ? <ExpandLess /> : <ExpandMore />}
-                  </ListItemButton>
-                  <Collapse in={open} timeout="auto" unmountOnExit>
-                    <Box sx={{ pl: 4, py: 1, backgroundColor: '#111a2e' }}>
-                      <Typography variant="body2" lineHeight={2}><b>Input:</b> {JSON.stringify(result.input)}</Typography>
-                      <Typography variant="body2" lineHeight={2}><b>Expected:</b> {JSON.stringify(result.expected)}</Typography>
-                      <Typography variant="body2" lineHeight={2}><b>Actual:</b> {result.error ?? JSON.stringify(result.actual)}</Typography>
-                      {result.error && (
-                        <Typography variant="body2" color="error"><b>Error:</b> {result.error}</Typography>
-                      )}
-                    </Box>
-                  </Collapse>
-                  <Divider />
-                </Box>
-              );
-            })}
-          </List>
+          <Box sx={{ flex: 1, overflow: 'auto' }}>
+            <List disablePadding>
+              {results.map((result, i) => {
+                const open = openIndexes.includes(i);
+                return (
+                  <Box key={i}>
+                    <ListItemButton onClick={() => handleToggle(i)} sx={{ py: 1, gap: 1.5 }}>
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          fontFamily: 'monospace',
+                          fontWeight: 700,
+                          flexShrink: 0,
+                          color: result.passed ? 'success.main' : 'error.main',
+                        }}
+                      >
+                        {result.passed ? 'PASS' : 'FAIL'}
+                      </Typography>
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          flex: 1,
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                          color: 'text.secondary',
+                        }}
+                      >
+                        #{i + 1} {result.name}
+                      </Typography>
+                      {open ? <ExpandLess sx={{ fontSize: 16, flexShrink: 0 }} /> : <ExpandMore sx={{ fontSize: 16, flexShrink: 0 }} />}
+                    </ListItemButton>
+                    <Collapse in={open} timeout="auto" unmountOnExit>
+                      <Box
+                        sx={{
+                          pl: 3,
+                          pr: 2,
+                          py: 1.5,
+                          backgroundColor: '#111827',
+                          borderLeft: '2px solid',
+                          borderColor: result.passed ? 'success.main' : 'error.main',
+                        }}
+                      >
+                        <Typography variant="body2" sx={{ fontFamily: 'monospace', lineHeight: 2 }}>
+                          <Box component="span" sx={{ color: 'text.primary', mr: 1 }}>Input:</Box>
+                          <Box component="span" sx={{ color: 'text.secondary' }}>{JSON.stringify(result.input)}</Box>
+                        </Typography>
+                        <Typography variant="body2" sx={{ fontFamily: 'monospace', lineHeight: 2 }}>
+                          <Box component="span" sx={{ color: 'text.primary', mr: 1 }}>Expected:</Box>
+                          <Box component="span" sx={{ color: 'text.secondary' }}>{JSON.stringify(result.expected)}</Box>
+                        </Typography>
+                        <Typography variant="body2" sx={{ fontFamily: 'monospace', lineHeight: 2 }}>
+                          <Box component="span" sx={{ color: 'text.primary', mr: 1 }}>Actual:</Box>
+                          <Box component="span" sx={{ color: 'text.secondary' }}>{result.error ?? JSON.stringify(result.actual)}</Box>
+                        </Typography>
+                        {result.error && (
+                          <Typography variant="body2" sx={{ fontFamily: 'monospace', color: 'error.main', mt: 0.5 }}>
+                            Error: {result.error}
+                          </Typography>
+                        )}
+                      </Box>
+                    </Collapse>
+                    <Divider />
+                  </Box>
+                );
+              })}
+            </List>
+          </Box>
           {allPassed && <SubmissionArea quId={quId} code={code} />}
         </>
       )}

@@ -1,15 +1,22 @@
 /**
- * Answer data loaded from static/questions/qu{N}/answers/ files.
+ * Answer data loaded from static/questions/qu{N}/answers/[githubId]/ directories.
  */
 export interface Answer {
-  /** File name without extension. e.g. '032' */
+  /** GitHub user ID (directory name). e.g. 'octocat' */
   answerId: string;
   /** Raw text of the answer code. */
   code: string;
+  /** Raw text of description.md, if present. */
+  description?: string;
 }
 
-const answerModules = import.meta.glob(
-  '/static/questions/qu*/answers/*.ts',
+const codeModules = import.meta.glob(
+  '/static/questions/qu*/answers/*/*.ts',
+  { eager: true, query: '?raw', import: 'default' }
+) as Record<string, string>;
+
+const descModules = import.meta.glob(
+  '/static/questions/qu*/answers/*/*.md',
   { eager: true, query: '?raw', import: 'default' }
 ) as Record<string, string>;
 
@@ -21,14 +28,26 @@ const answerModules = import.meta.glob(
 function buildAnswerMap(): Map<string, Answer[]> {
   const map = new Map<string, Answer[]>();
 
-  for (const [path, code] of Object.entries(answerModules)) {
+  for (const [path, code] of Object.entries(codeModules)) {
     const segments = path.split('/');
     const quId = segments[3];
-    const answerId = segments[5].replace(/\.ts$/, '');
+    const answerId = segments[5];
 
     const list = map.get(quId) ?? [];
     list.push({ answerId, code });
     map.set(quId, list);
+  }
+
+  for (const [path, description] of Object.entries(descModules)) {
+    const segments = path.split('/');
+    const quId = segments[3];
+    const answerId = segments[5];
+
+    const list = map.get(quId);
+    if (list) {
+      const answer = list.find((a) => a.answerId === answerId);
+      if (answer) answer.description = description;
+    }
   }
 
   for (const list of map.values()) {
