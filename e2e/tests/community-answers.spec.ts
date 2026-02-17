@@ -1,14 +1,7 @@
 import { test, expect } from '@playwright/test';
-import { readFileSync } from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
 import { AppPage } from '../pages/AppPage';
 
-const REPO_ROOT = path.resolve(fileURLToPath(new URL('../..', import.meta.url)));
-const ANSWER_PATH = path.join(
-  REPO_ROOT,
-  'static/questions/qu1/answers/bunchoNiki/execute.ts'
-);
+const ANSWER_URL = 'answers/qu1/bunchoNiki/execute.ts';
 
 test.describe('回答閲覧機能', () => {
   test.beforeEach(async ({ page }) => {
@@ -56,7 +49,9 @@ test.describe('回答閲覧機能', () => {
     const actualCode = await app.getCommunityAnswerCode();
     expect(actualCode).not.toBeNull();
 
-    const expectedCode = readFileSync(ANSWER_PATH, 'utf-8').trim();
+    const expectedCodeResp = await page.request.get(ANSWER_URL);
+    expect(expectedCodeResp.ok()).toBeTruthy();
+    const expectedCode = (await expectedCodeResp.text()).trim();
     expect(actualCode?.trim()).toBe(expectedCode);
   });
 

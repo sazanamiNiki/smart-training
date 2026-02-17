@@ -21,10 +21,9 @@ static/questions/
     ├── meta.ts           # メタ情報（id, title, mode, description, functionName）
     ├── testCases.ts      # テストケース（ブラウザUI・Vitest共用）
     ├── execute.ts        # ユーザーが実装するスケルトン関数
-    ├── execute.test.ts   # Vitestテストスイート
+    ├── execute.test.ts   # 画面上での動作をチェックするためのテスト
     ├── constants.ts      # 定数定義（省略可）
     ├── README.md         # 課題説明
-    └── answers/          # 解答保存ディレクトリ（空でOK）
 ```
 
 ### 各ファイルの書き方
@@ -90,14 +89,6 @@ export const SOME_LABEL = '値';
 2. 上記の各ファイルを配置する
 3. アプリを再起動すると問題が自動認識される
 
-## テストの実行
-
-```sh
-npm test
-```
-
-`static/questions/qu*/execute.test.ts` がすべて対象になる。
-
 ## ビルド
 
 ```sh
@@ -137,13 +128,10 @@ POST /submit (Cloudflare Worker)
 │
 ├── GitHub App JWT 生成（PKCS#8 秘密鍵 + Web Crypto RS256）
 ├── POST /app/installations/{id}/access_tokens → Installation Token 取得
-│
-├── PUT /repos/.../contents/static/{quId}/{login}/execute.ts   （コード）
-└── PUT /repos/.../contents/static/{quId}/{login}/description.md（説明）
 ```
 
 ### 4. 完了
 
 - Worker が `{ success: true }` を返却
-- 画面に `static/{quId}/{githubUser}/` のパスを表示
+- 画面に `answers/{quId}/{githubUser}/` のパスを表示
 - リポジトリの `GITHUB_TARGET_BRANCH` ブランチに2ファイルがコミットされる

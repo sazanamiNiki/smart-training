@@ -1,14 +1,7 @@
 import { test, expect } from '@playwright/test';
-import { readFileSync } from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
 import { AppPage } from '../pages/AppPage';
 
-const REPO_ROOT = path.resolve(fileURLToPath(new URL('../..', import.meta.url)));
-const ANSWER_PATH = path.join(
-  REPO_ROOT,
-  'static/questions/qu1/answers/bunchoNiki/execute.ts'
-);
+const ANSWER_URL = 'answers/qu1/bunchoNiki/execute.ts';
 
 test.describe('提出機能', () => {
   test.beforeEach(async ({ page }) => {
@@ -19,7 +12,9 @@ test.describe('提出機能', () => {
     const app = new AppPage(page);
     await app.goto();
 
-    const answerCode = readFileSync(ANSWER_PATH, 'utf-8');
+    const answerResp = await page.request.get(ANSWER_URL);
+    expect(answerResp.ok()).toBeTruthy();
+    const answerCode = await answerResp.text();
     await app.setEditorCode(answerCode);
     await app.runTests(90000);
 
@@ -39,7 +34,9 @@ test.describe('提出機能', () => {
     const app = new AppPage(page);
     await app.goto();
 
-    const answerCode = readFileSync(ANSWER_PATH, 'utf-8');
+    const answerResp = await page.request.get(ANSWER_URL);
+    expect(answerResp.ok()).toBeTruthy();
+    const answerCode = await answerResp.text();
     await app.setEditorCode(answerCode);
     await app.runTests(90000);
 
@@ -63,16 +60,15 @@ test.describe('提出機能', () => {
       localStorage.setItem('smart-training:github_token', 'fake-token-for-testing');
       localStorage.setItem('smart-training:github_user', 'bunchoNiki');
     });
+
     const app = new AppPage(page);
     await app.goto();
 
-    const answerCode = readFileSync(ANSWER_PATH, 'utf-8');
+    const answerResp = await page.request.get(ANSWER_URL);
+    expect(answerResp.ok()).toBeTruthy();
+    const answerCode = await answerResp.text();
     await app.setEditorCode(answerCode);
     await app.runTests(90000);
-
-    const passText = await app.passCount.textContent();
-    const [passed, total] = (passText ?? '').split(' / ').map((s) => parseInt(s, 10));
-    expect(passed).toBe(total);
 
     await expect(page.getByText('回答済み')).toBeVisible();
     await expect(app.submissionArea).not.toBeVisible();

@@ -1,7 +1,7 @@
 import { useMemo, useState, useEffect } from 'react';
 import { Box, FormControl, InputLabel, MenuItem, Select, Typography } from '@mui/material';
 import type { SelectChangeEvent } from '@mui/material';
-import { getAnswerMap } from '../../problems/answers';
+import { Answer, fetchAnswerMeta, fetchAnswerDetail } from '../../problems/answers';
 import AnswerItem from './AnswerItem';
 import type { CommunityAnswersProps } from './types';
 
@@ -11,7 +11,20 @@ import type { CommunityAnswersProps } from './types';
  * @param quId - The question ID to show answers for.
  */
 export default function CommunityAnswers({ quId }: CommunityAnswersProps) {
-  const answers = useMemo(() => getAnswerMap().get(quId) ?? [], [quId]);
+  const [answers, setAnswers] = useState<Answer[]>([]);
+
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      const metaList = await fetchAnswerMeta();
+      const filtered = metaList.filter((m: { quId: string }) => m.quId === quId);
+      const details = await Promise.all(
+        filtered.map((m: { quId: string; answerId: string }) => fetchAnswerDetail(m.quId, m.answerId))
+      );
+      if (mounted) setAnswers(details);
+    })();
+    return () => { mounted = false; };
+  }, [quId]);
   const [selectedId, setSelectedId] = useState<string>('');
 
   useEffect(() => {
@@ -19,7 +32,7 @@ export default function CommunityAnswers({ quId }: CommunityAnswersProps) {
   }, [quId, answers]);
 
   const selectedAnswer = useMemo(
-    () => answers.find((a) => a.answerId === selectedId) ?? null,
+    () => answers.find((a: { answerId: string }) => a.answerId === selectedId) ?? null,
     [answers, selectedId]
   );
 
@@ -47,7 +60,7 @@ export default function CommunityAnswers({ quId }: CommunityAnswersProps) {
           label="回答者"
           onChange={handleChange}
         >
-          {answers.map((a) => (
+          {answers.map((a: { answerId: string }) => (
             <MenuItem key={a.answerId} value={a.answerId}>
               {a.answerId}
             </MenuItem>
