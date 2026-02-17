@@ -34,9 +34,9 @@ export default function ResultsPanel({ problem, results, running, code }: Result
         onChange={(_, v: number) => setTab(v)}
         sx={{ borderBottom: '1px solid', borderColor: 'divider', flexShrink: 0 }}
       >
-        <Tab label="問題説明" />
-        <Tab label="テスト結果" />
-        <Tab label="みんなの回答" />
+        <Tab label="問題説明" data-testid="tab-description" />
+        <Tab label="テスト結果" data-testid="tab-results" />
+        <Tab label="みんなの回答" data-testid="tab-community" />
       </Tabs>
 
       {tab === DESCRIPTION_TAB && (

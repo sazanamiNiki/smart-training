@@ -31,6 +31,8 @@ export class AppPage {
   readonly submissionArea: Locator;
   /** GitHub authentication button in submission area. */
   readonly githubAuthButton: Locator;
+  /** Device Flow user code displayed after GitHub auth starts. */
+  readonly userCode: Locator;
   /** Community answers container. */
   readonly communityAnswers: Locator;
   /** Answer item container in community answers. */
@@ -49,6 +51,7 @@ export class AppPage {
     this.passCount = page.getByTestId('pass-count');
     this.submissionArea = page.getByTestId('submission-area');
     this.githubAuthButton = page.getByTestId('github-auth-button');
+    this.userCode = page.getByTestId('user-code');
     this.communityAnswers = page.getByTestId('community-answers');
     this.answerItem = page.getByTestId('answer-item');
   }

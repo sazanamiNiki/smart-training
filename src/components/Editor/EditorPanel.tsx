@@ -69,6 +69,7 @@ export default function EditorPanel({
           disabled={running || executing}
           startIcon={<FactCheckIcon />}
           sx={{ color: '#fff' }}
+          data-testid="test-button"
         >
           Test
         </Button>
@@ -78,6 +79,7 @@ export default function EditorPanel({
           onClick={execute}
           disabled={executing || running}
           startIcon={<PlayArrowIcon />}
+          data-testid="run-button"
         >
           Run
         </Button>

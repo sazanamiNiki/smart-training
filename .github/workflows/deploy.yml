@@ -40,6 +40,17 @@ jobs:
 
       - run: npm ci
 
+      - name: Validate required secrets
+        run: |
+          if [ -z "${{ secrets.VITE_GITHUB_CLIENT_ID }}" ]; then
+            echo "::error::VITE_GITHUB_CLIENT_ID is not set"
+            exit 1
+          fi
+          if [ -z "${{ secrets.VITE_GITHUB_PROXY_URL }}" ]; then
+            echo "::error::VITE_GITHUB_PROXY_URL is not set"
+            exit 1
+          fi
+
       - name: Set BASE_PATH for main
         if: github.ref == 'refs/heads/main'
         run: echo "BASE_PATH=/${{ github.event.repository.name }}/" >> $GITHUB_ENV

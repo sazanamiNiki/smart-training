@@ -18,6 +18,7 @@ export default function AnswerItem({ answer }: AnswerItemProps) {
 
   return (
     <Box
+      data-testid="answer-item"
       sx={{
         flex: 1,
         minHeight: 0,
@@ -55,7 +56,7 @@ export default function AnswerItem({ answer }: AnswerItemProps) {
       <Box sx={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', margin: '4px' }}>
         {hasDescription && open && (
           <MarkdownWrapper height={'30%'}>
-            <ReactMarkdown>{answer.description ?? ''}</ReactMarkdown>
+            <ReactMarkdown data-testid="tabDescription">{answer.description ?? ''}</ReactMarkdown>
           </MarkdownWrapper>
         )}
         <Box sx={{ flex: 7, minHeight: 0 }}>
