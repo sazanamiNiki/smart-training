@@ -1,6 +1,3 @@
-
-import { Key } from './constants';
-
 /**
  * クレカ情報の暗号化を行う.
  *
