@@ -31,7 +31,7 @@ export const Results = ({ running, results, code, quId }: Props) => {
   
 
   return (
-    <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+    <Box data-testid="results-area" sx={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
       {running ? (
         <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
           <CircularProgress size={24} />
@@ -45,7 +45,7 @@ export const Results = ({ running, results, code, quId }: Props) => {
       ) : (
         <>
           <Box sx={{ px: 2, py: 1, borderBottom: '1px solid', borderColor: 'divider', flexShrink: 0 }}>
-            <Typography variant="body2">
+            <Typography variant="body2" data-testid="pass-count">
               {results.filter((r) => r.passed).length} / {results.length} passed
             </Typography>
           </Box>
@@ -55,7 +55,7 @@ export const Results = ({ running, results, code, quId }: Props) => {
                 const open = openIndexes.includes(i);
                 return (
                   <Box key={i}>
-                    <ListItemButton onClick={() => handleToggle(i)} sx={{ py: 1, gap: 1.5 }}>
+                    <ListItemButton onClick={() => handleToggle(i)} sx={{ py: 1, gap: 1.5 }} data-testid={`test-result-row-${i}`}>
                       <Typography
                         variant="body2"
                         sx={{
