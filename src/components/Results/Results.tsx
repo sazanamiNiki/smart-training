@@ -4,7 +4,7 @@ import ExpandMore from '@mui/icons-material/ExpandMore';
 import { TestResult } from "../../types";
 import SubmissionArea from './SubmissionArea';
 import { useGitHubAuth } from '../../contexts/GitHubAuthContext';
-import { getAnswerMap } from '../../problems/answers';
+import { Answer, fetchAnswerMeta, fetchAnswerDetail } from '../../problems/answers';
 
 import { useState, useEffect, useMemo } from "react";
 
@@ -19,12 +19,25 @@ export const Results = ({ running, results, code, quId }: Props) => {
   const allPassed = results.length > 0 && results.every((r) => r.passed);
   const [openIndexes, setOpenIndexes] = useState<number[]>([]);
   const { githubUser } = useGitHubAuth();
+  const [answers, setAnswers] = useState<Answer[]>([]);
+
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      const metaList = await fetchAnswerMeta();
+      const filtered = metaList.filter((m: { quId: string }) => m.quId === quId);
+      const details = await Promise.all(
+        filtered.map((m: { quId: string; answerId: string }) => fetchAnswerDetail(m.quId, m.answerId))
+      );
+      if (mounted) setAnswers(details);
+    })();
+    return () => { mounted = false; };
+  }, [quId]);
 
   const isAlreadySubmitted = useMemo(() => {
     if (!githubUser) return false;
-    const answers = getAnswerMap().get(quId) ?? [];
-    return answers.some((a) => a.answerId === githubUser);
-  }, [quId, githubUser]);
+    return answers.some((a: { answerId: string }) => a.answerId === githubUser);
+  }, [answers, githubUser]);
 
   useEffect(() => {
     setOpenIndexes([]);

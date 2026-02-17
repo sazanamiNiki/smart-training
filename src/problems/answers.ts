@@ -2,68 +2,44 @@
  * Answer data loaded from static/questions/qu{N}/answers/[githubId]/ directories.
  */
 export interface Answer {
-  /** GitHub user ID (directory name). e.g. 'octocat' */
   answerId: string;
-  /** Raw text of the answer code. */
   code: string;
-  /** Raw text of description.md, if present. */
   description?: string;
 }
 
-const codeModules = import.meta.glob(
-  '/static/questions/qu*/answers/*/*.ts',
-  { eager: true, query: '?raw', import: 'default' }
-) as Record<string, string>;
 
-const descModules = import.meta.glob(
-  '/static/questions/qu*/answers/*/*.md',
-  { eager: true, query: '?raw', import: 'default' }
-) as Record<string, string>;
+
+let answerMetaCache: Array<{ quId: string; answerId: string; hasDescription: boolean }> | null = null;
+const answerDetailCache: Record<string, Answer> = {};
 
 /**
- * Build a map from quId to Answer[].
- *
- * @returns Map of quId -> Answer[].
+ * answers/answers-index.jsonからメタ情報のみ取得
  */
-function buildAnswerMap(): Map<string, Answer[]> {
-  const map = new Map<string, Answer[]>();
-
-  for (const [path, code] of Object.entries(codeModules)) {
-    const segments = path.split('/');
-    const quId = segments[3];
-    const answerId = segments[5];
-
-    const list = map.get(quId) ?? [];
-    list.push({ answerId, code });
-    map.set(quId, list);
-  }
-
-  for (const [path, description] of Object.entries(descModules)) {
-    const segments = path.split('/');
-    const quId = segments[3];
-    const answerId = segments[5];
-
-    const list = map.get(quId);
-    if (list) {
-      const answer = list.find((a) => a.answerId === answerId);
-      if (answer) answer.description = description;
-    }
-  }
-
-  for (const list of map.values()) {
-    list.sort((a, b) => a.answerId.localeCompare(b.answerId));
-  }
-
-  return map;
+export async function fetchAnswerMeta(): Promise<Array<{ quId: string; answerId: string; hasDescription: boolean }>> {
+  if (answerMetaCache) return answerMetaCache;
+  const res = await fetch('/answers/answers-index.json');
+  if (!res.ok) throw new Error('answers-index.json fetch failed');
+  answerMetaCache = await res.json();
+  return answerMetaCache ?? [];
 }
 
-const answerMap = buildAnswerMap();
-
 /**
- * Return the map of quId to Answer[].
- *
- * @returns quId -> Answer[] map.
+ * 詳細データ（code, description）を個別fetch＋キャッシュ
  */
-export function getAnswerMap(): Map<string, Answer[]> {
-  return answerMap;
+export async function fetchAnswerDetail(quId: string, answerId: string): Promise<Answer> {
+  const key = `${quId}/${answerId}`;
+  if (answerDetailCache[key]) return answerDetailCache[key];
+  const codeUrl = `/answers/${quId}/${answerId}/execute.ts`;
+  const descUrl = `/answers/${quId}/${answerId}/description.md`;
+  const [codeRes, descRes] = await Promise.all([
+    fetch(codeUrl),
+    fetch(descUrl)
+  ]);
+  if (!codeRes.ok) throw new Error('code.ts fetch failed');
+  const code = await codeRes.text();
+  let description: string | undefined = undefined;
+  if (descRes.ok) description = await descRes.text();
+  const answer: Answer = { answerId, code, description };
+  answerDetailCache[key] = answer;
+  return answer;
 }

@@ -1,20 +1,13 @@
 import { test, expect } from '@playwright/test';
-import { readFileSync } from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
 import { AppPage } from '../pages/AppPage';
 
-const REPO_ROOT = path.resolve(fileURLToPath(new URL('../..', import.meta.url)));
-const ANSWER_PATH = path.join(
-  REPO_ROOT,
-  'static/questions/qu1/answers/bunchoNiki/execute.ts'
-);
-const TEST_CASES_PATH = path.join(REPO_ROOT, 'static/questions/qu1/testCases.ts');
+const ANSWER_URL = 'answers/qu1/bunchoNiki/execute.ts';
+const TEST_CASES_URL = 'static/questions/qu1/testCases.ts';
 
 /** Extract test case names from testCases.ts source text. */
 function extractTestCaseNames(src: string): string[] {
   const names: string[] = [];
-  const re = /name:\s*'([^']+)'/g;
+  const re = /name:\s*['"]([^'"\n]+)['"]/g;
   let m: RegExpExecArray | null;
   while ((m = re.exec(src)) !== null) {
     names.push(m[1]);
@@ -31,7 +24,9 @@ test.describe('テスト実行と結果確認', () => {
     const app = new AppPage(page);
     await app.goto();
 
-    const answerCode = readFileSync(ANSWER_PATH, 'utf-8');
+    const answerResp = await page.request.get(ANSWER_URL);
+    expect(answerResp.ok()).toBeTruthy();
+    const answerCode = await answerResp.text();
     await app.setEditorCode(answerCode);
     await app.runTests(90000);
 
@@ -47,11 +42,15 @@ test.describe('テスト実行と結果確認', () => {
     const app = new AppPage(page);
     await app.goto();
 
-    const answerCode = readFileSync(ANSWER_PATH, 'utf-8');
+    const answerResp = await page.request.get(ANSWER_URL);
+    expect(answerResp.ok()).toBeTruthy();
+    const answerCode = await answerResp.text();
     await app.setEditorCode(answerCode);
     await app.runTests(90000);
 
-    const testCasesSrc = readFileSync(TEST_CASES_PATH, 'utf-8');
+    const testCasesResp = await page.request.get(TEST_CASES_URL);
+    expect(testCasesResp.ok()).toBeTruthy();
+    const testCasesSrc = await testCasesResp.text();
     const names = extractTestCaseNames(testCasesSrc);
 
     const rows = await app.testResultRows().count();
@@ -62,11 +61,15 @@ test.describe('テスト実行と結果確認', () => {
     const app = new AppPage(page);
     await app.goto();
 
-    const answerCode = readFileSync(ANSWER_PATH, 'utf-8');
+    const answerResp = await page.request.get(ANSWER_URL);
+    expect(answerResp.ok()).toBeTruthy();
+    const answerCode = await answerResp.text();
     await app.setEditorCode(answerCode);
     await app.runTests(90000);
 
-    const testCasesSrc = readFileSync(TEST_CASES_PATH, 'utf-8');
+    const testCasesResp = await page.request.get(TEST_CASES_URL);
+    expect(testCasesResp.ok()).toBeTruthy();
+    const testCasesSrc = await testCasesResp.text();
     const expectedNames = extractTestCaseNames(testCasesSrc);
 
     const uniqueNames = [...new Set(expectedNames)];
