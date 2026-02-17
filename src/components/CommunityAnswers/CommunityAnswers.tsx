@@ -38,7 +38,7 @@ export default function CommunityAnswers({ quId }: CommunityAnswersProps) {
   }
 
   return (
-    <Box sx={{ flex: 1, overflow: 'hidden', p: 2, display: 'flex', flexDirection: 'column', gap: 2, minHeight: 0 }}>
+    <Box data-testid="community-answers" sx={{ flex: 1, overflow: 'hidden', p: 2, display: 'flex', flexDirection: 'column', gap: 2, minHeight: 0 }}>
       <FormControl size="small" fullWidth>
         <InputLabel id="answerer-select-label">回答者</InputLabel>
         <Select

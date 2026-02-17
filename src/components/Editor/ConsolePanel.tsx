@@ -46,11 +46,12 @@ export function ConsolePanel({ logs, onClear }: ConsolePanelProps) {
         <Typography variant="caption" sx={{ color: 'text.secondary', mr: 'auto' }}>
           Console
         </Typography>
-        <Button size="small" onClick={onClear} sx={{ minWidth: 0, px: 1, fontSize: 12 }}>
+        <Button size="small" onClick={onClear} sx={{ minWidth: 0, px: 1, fontSize: 12 }} data-testid="console-clear">
           Clear
         </Button>
       </Box>
       <Box
+        data-testid="console-output"
         sx={{
           flex: 1,
           overflow: 'auto',

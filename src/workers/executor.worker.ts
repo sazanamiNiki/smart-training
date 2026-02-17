@@ -154,7 +154,7 @@ self.onmessage = async (event) => {
       if (constants) {
         constantsJsCode = stripModuleSyntax(await transformTS(constants));
       }
-      const body = [CONSOLE_MOCK, userJsCode, constantsJsCode, 'return __consoleLogs;'].join('\n');
+      const body = [CONSOLE_MOCK, constantsJsCode, userJsCode, 'return __consoleLogs;'].join('\n');
       const logs = new Function(body)() as ConsoleEntry[];
       self.postMessage({ type: 'console-result', logs } as WorkerResponse);
       return;
@@ -174,8 +174,8 @@ self.onmessage = async (event) => {
 
     const body = [
       VITEST_MOCK,
-      userJsCode,
       constantsJsCode,
+      userJsCode,
       `var testCases = ${JSON.stringify(testCases)};`,
       testCodeBody,
       'return __testResults;',
