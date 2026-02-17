@@ -21,10 +21,24 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Generate answers-index.json
+        run: |
+          find answers -type f -name execute.ts | while read codefile; do \
+            quid=$(echo "$codefile" | awk -F/ '{print $(NF-2)}'); \
+            answerid=$(echo "$codefile" | awk -F/ '{print $(NF-1)}'); \
+            descfile="$(dirname "$codefile")/description.md"; \
+            if [ -f "$descfile" ]; then \
+              hasDescription=true; \
+            else \
+              hasDescription=false; \
+            fi; \
+            echo "{\"quId\":\"$quid\",\"answerId\":\"$answerid\",\"hasDescription\":$hasDescription}"; \
+          done | jq -s . > answers/answers-index.json
+
       - uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: static
+          publish_dir: answers
           keep_files: true
 
   deploy:
@@ -40,6 +54,17 @@ jobs:
 
       - run: npm ci
 
+      - name: Validate required secrets
+        run: |
+          if [ -z "${{ secrets.VITE_GITHUB_CLIENT_ID }}" ]; then
+            echo "::error::VITE_GITHUB_CLIENT_ID is not set"
+            exit 1
+          fi
+          if [ -z "${{ secrets.VITE_GITHUB_PROXY_URL }}" ]; then
+            echo "::error::VITE_GITHUB_PROXY_URL is not set"
+            exit 1
+          fi
+
       - name: Set BASE_PATH for main
         if: github.ref == 'refs/heads/main'
         run: echo "BASE_PATH=/${{ github.event.repository.name }}/" >> $GITHUB_ENV
@@ -52,6 +77,10 @@ jobs:
         env:
           VITE_GITHUB_CLIENT_ID: ${{ secrets.VITE_GITHUB_CLIENT_ID }}
           VITE_GITHUB_PROXY_URL: ${{ secrets.VITE_GITHUB_PROXY_URL }}
+
+      - name: Remove answers from build artifacts
+        run: |
+          rm -rf dist/answers dist/answers-index.json
 
       - name: Deploy main to root
         if: github.ref == 'refs/heads/main'
