@@ -3,7 +3,7 @@ import { main } from './execute';
 import { testCases } from './testCases';
 
 describe('qu4', () => {
-  it.each(testCases)('$name', ({ board, expected }) => {
-    expect((main as unknown as (...args: unknown[]) => unknown)(board)).toEqual(expected);
+  it.each(testCases)('$name', ({ input, expected }) => {
+    expect((main as unknown as (...args: unknown[]) => unknown)(...input)).toEqual(expected);
   });
 });
