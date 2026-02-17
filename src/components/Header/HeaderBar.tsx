@@ -53,6 +53,7 @@ export default function HeaderBar({
   const { githubUser } = useGitHubAuth();
   const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
   const [inquiryOpen, setInquiryOpen] = useState(false);
+  const [inquiryMode, setInquiryMode] = useState<'contact' | 'feature-request'>('contact');
   const [settingsOpen, setSettingsOpen] = useState(false);
 
   const openMenu = (e: React.MouseEvent<HTMLElement>) => setMenuAnchor(e.currentTarget);
@@ -60,6 +61,13 @@ export default function HeaderBar({
 
   const handleInquiry = () => {
     closeMenu();
+    setInquiryMode('contact');
+    setInquiryOpen(true);
+  };
+
+  const handleFeatureRequest = () => {
+    closeMenu();
+    setInquiryMode('feature-request');
     setInquiryOpen(true);
   };
 
@@ -116,10 +124,11 @@ export default function HeaderBar({
         >
           <MenuItem onClick={handleSettings}>設定</MenuItem>
           <MenuItem onClick={handleInquiry}>問い合わせ</MenuItem>
+          <MenuItem onClick={handleFeatureRequest}>機能追加要望</MenuItem>
         </Menu>
       </Box>
 
-      <InquiryDialog open={inquiryOpen} onClose={() => setInquiryOpen(false)} />
+      <InquiryDialog open={inquiryOpen} onClose={() => setInquiryOpen(false)} mode={inquiryMode} />
       <SettingsDialog
         open={settingsOpen}
         onClose={() => setSettingsOpen(false)}
