@@ -11,13 +11,15 @@ export interface Answer {
 
 let answerMetaCache: Array<{ quId: string; answerId: string; hasDescription: boolean }> | null = null;
 const answerDetailCache: Record<string, Answer> = {};
+const baseUrlRaw = (import.meta.env.BASE_URL ?? '/').replace(/\/$/, '');
+const baseUrl = baseUrlRaw.endsWith('/dev') ? baseUrlRaw.slice(0, -4) : baseUrlRaw;
 
 /**
  * answers/answers-index.jsonからメタ情報のみ取得
  */
 export async function fetchAnswerMeta(): Promise<Array<{ quId: string; answerId: string; hasDescription: boolean }>> {
   if (answerMetaCache) return answerMetaCache;
-  const res = await fetch('/answers/answers-index.json');
+  const res = await fetch(`${baseUrl}/answers/answers-index.json`);
   if (!res.ok) throw new Error('answers-index.json fetch failed');
   answerMetaCache = await res.json();
   return answerMetaCache ?? [];
@@ -29,8 +31,8 @@ export async function fetchAnswerMeta(): Promise<Array<{ quId: string; answerId:
 export async function fetchAnswerDetail(quId: string, answerId: string): Promise<Answer> {
   const key = `${quId}/${answerId}`;
   if (answerDetailCache[key]) return answerDetailCache[key];
-  const codeUrl = `/answers/${quId}/${answerId}/execute.ts`;
-  const descUrl = `/answers/${quId}/${answerId}/description.md`;
+  const codeUrl = `${baseUrl}/answers/${quId}/${answerId}/execute.ts`;
+  const descUrl = `${baseUrl}/answers/${quId}/${answerId}/description.md`;
   const [codeRes, descRes] = await Promise.all([
     fetch(codeUrl),
     fetch(descUrl)
