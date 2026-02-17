@@ -3,8 +3,10 @@ import ExpandLess from '@mui/icons-material/ExpandLess';
 import ExpandMore from '@mui/icons-material/ExpandMore';
 import { TestResult } from "../../types";
 import SubmissionArea from './SubmissionArea';
+import { useGitHubAuth } from '../../contexts/GitHubAuthContext';
+import { getAnswerMap } from '../../problems/answers';
 
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 
 type Props = {
   running: boolean;
@@ -16,6 +18,17 @@ type Props = {
 export const Results = ({ running, results, code, quId }: Props) => {
   const allPassed = results.length > 0 && results.every((r) => r.passed);
   const [openIndexes, setOpenIndexes] = useState<number[]>([]);
+  const { githubUser } = useGitHubAuth();
+
+  const isAlreadySubmitted = useMemo(() => {
+    if (!githubUser) return false;
+    const answers = getAnswerMap().get(quId) ?? [];
+    return answers.some((a) => a.answerId === githubUser);
+  }, [quId, githubUser]);
+
+  useEffect(() => {
+    setOpenIndexes([]);
+  }, [quId]);
 
   const handleToggle = (idx: number) => {
     setOpenIndexes((prev) =>
@@ -39,7 +52,7 @@ export const Results = ({ running, results, code, quId }: Props) => {
       ) : results.length === 0 ? (
         <Box sx={{ p: 2 }}>
           <Typography variant="body2" color="text.secondary">
-            Run を実行してテスト結果を表示
+            Test を実行してテスト結果を表示
           </Typography>
         </Box>
       ) : (
@@ -121,7 +134,17 @@ export const Results = ({ running, results, code, quId }: Props) => {
               })}
             </List>
           </Box>
-          {allPassed && <SubmissionArea quId={quId} code={code} />}
+          {allPassed && (
+            isAlreadySubmitted ? (
+              <Box sx={{ p: 2, borderTop: '1px solid', borderColor: 'divider' }}>
+                <Typography variant="body2" color="success.main">
+                  回答済み
+                </Typography>
+              </Box>
+            ) : (
+              <SubmissionArea quId={quId} code={code} />
+            )
+          )}
         </>
       )}
     </Box>

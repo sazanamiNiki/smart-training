@@ -19,6 +19,7 @@ export interface TestCase {
   input: unknown[];
   expected: unknown;
   name: string;
+  [key: string]: unknown;
 }
 
 export interface TestResult {
