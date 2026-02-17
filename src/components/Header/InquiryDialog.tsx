@@ -11,21 +11,23 @@ import {
 } from '@mui/material';
 import { useGitHubAuth } from '../../contexts/GitHubAuthContext';
 
-const INQUIRY_URL =
-  'https://script.google.com/macros/s/AKfycbxhWtyDaC3Gxw8ebudMaPTa52MbMCEzqGqhlWlIYDF8Q2hWfvhD-goQptfnz5ZBbW5l/exec?path=contract';
+const GAS_BASE_URL =
+  'https://script.google.com/macros/s/AKfycbxhWtyDaC3Gxw8ebudMaPTa52MbMCEzqGqhlWlIYDF8Q2hWfvhD-goQptfnz5ZBbW5l/exec';
 
 type Props = {
   open: boolean;
   onClose: () => void;
+  mode: 'contact' | 'feature-request';
 };
 
 /**
- * Render inquiry dialog with message input and POST submission.
+ * Render inquiry or feature-request dialog with message input and POST submission.
  *
  * @param open - Whether the dialog is visible.
  * @param onClose - Callback to close the dialog.
+ * @param mode - Dialog mode: 'contact' for inquiry, 'feature-request' for feature requests.
  */
-export default function InquiryDialog({ open, onClose }: Props) {
+export default function InquiryDialog({ open, onClose, mode }: Props) {
   const { githubUser } = useGitHubAuth();
   const [message, setMessage] = useState('');
   const [sending, setSending] = useState(false);
@@ -47,7 +49,8 @@ export default function InquiryDialog({ open, onClose }: Props) {
       const body: Record<string, string> = { message: message.trim() };
       if (githubUser) body.userId = githubUser;
 
-      const res = await fetch(INQUIRY_URL, {
+      const path = mode === 'contact' ? 'contract' : 'feature-request';
+      const res = await fetch(`${GAS_BASE_URL}?path=${path}`, {
         method: 'POST',
         headers: { 'Content-Type': 'text/plain' },
         body: JSON.stringify(body),
@@ -63,7 +66,7 @@ export default function InquiryDialog({ open, onClose }: Props) {
 
   return (
     <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm">
-      <DialogTitle>お問い合わせ</DialogTitle>
+      <DialogTitle>{mode === 'contact' ? 'お問い合わせ' : '機能追加要望'}</DialogTitle>
       <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 2 }}>
         {sent ? (
           <Typography variant="body1" color="success.main">
