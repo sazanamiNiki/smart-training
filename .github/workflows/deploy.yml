@@ -39,6 +39,7 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: answers
+          destination_dir: answers
           keep_files: true
 
   deploy:
