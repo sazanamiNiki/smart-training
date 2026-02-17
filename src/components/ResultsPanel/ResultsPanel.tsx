@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import { Box, Tab, Tabs, Typography } from '@mui/material';
@@ -16,16 +16,19 @@ const COMMUNITY_TAB = 2;
 export default function ResultsPanel({ problem, results, running, code }: ResultsPanelProps) {
   const [tab, setTab] = useState(DESCRIPTION_TAB);
   const [constantsOpen, setConstantsOpen] = useState(true);
+  const prevProblemIdRef = useRef(problem.id);
 
   useEffect(() => {
-    if (running || results.length > 0) {
-      setTab(1);
+    const changed = prevProblemIdRef.current !== problem.id;
+    prevProblemIdRef.current = problem.id;
+    if (changed) {
+      setTab(DESCRIPTION_TAB);
+      return;
     }
-  }, [running, results]);
-
-  useEffect(() => {
-    setTab(DESCRIPTION_TAB);
-  }, [problem]);
+    if (running || results.length > 0) {
+      setTab(RESULT_TAB);
+    }
+  }, [problem.id, running, results]);
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', padding: '0px 0px 32px 16px', marginRight: '4px' }}>

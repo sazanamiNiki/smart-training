@@ -1,5 +1,5 @@
 import { transformTS } from '../services/esbuild.service';
-import type { WorkerRequest, WorkerResponse, TestResult, ConsoleEntry } from '../types';
+import type { WorkerRequest, WorkerResponse, TestResult } from '../types';
 
 const VITEST_MOCK = `
 var __testResults = [];
@@ -103,6 +103,7 @@ function expect(actual) {
       try { actual(); } catch (err) {
         threw = true;
         thrownMsg = err instanceof Error ? err.message : String(err);
+        __lastActual = thrownMsg;
       }
       if (!threw) throw new Error('Expected function to throw');
       if (msg !== undefined && !thrownMsg.includes(String(msg))) {
@@ -144,46 +145,59 @@ var console = {
 };
 `;
 
+function buildUserCode(code: string, constants?: string) {
+  const userJsCode = stripModuleSyntax(code);
+  let constantsJsCode = '';
+  if (constants) {
+    constantsJsCode = stripModuleSyntax(constants);
+  }
+  return { userJsCode, constantsJsCode };
+}
+
+function runTest({ code, constants, testCode, testCases }: { code: string; constants?: string; testCode: string; testCases: unknown[] }) {
+  const { userJsCode, constantsJsCode } = buildUserCode(code, constants);
+  const testCodeBody = stripTestImports(testCode);
+  const body = [
+    CONSOLE_MOCK,
+    VITEST_MOCK,
+    constantsJsCode,
+    userJsCode,
+    `var testCases = ${JSON.stringify(testCases)};`,
+    testCodeBody,
+    'return { results: __testResults, logs: typeof __consoleLogs !== "undefined" ? __consoleLogs : [] };',
+  ].join('\n');
+  return new Function(body)();
+}
+
+function executeCode({ code, constants }: { code: string; constants?: string }) {
+  const { userJsCode, constantsJsCode } = buildUserCode(code, constants);
+  const body = [
+    CONSOLE_MOCK,
+    constantsJsCode,
+    userJsCode,
+    'return __consoleLogs;',
+  ].join('\n');
+  return new Function(body)();
+}
+
 self.onmessage = async (event) => {
   try {
     const { type, code, constants } = event.data as WorkerRequest;
-
     if (type === 'execute') {
-      const userJsCode = stripModuleSyntax(await transformTS(code));
-      let constantsJsCode = '';
-      if (constants) {
-        constantsJsCode = stripModuleSyntax(await transformTS(constants));
-      }
-      const body = [CONSOLE_MOCK, constantsJsCode, userJsCode, 'return __consoleLogs;'].join('\n');
-      const logs = new Function(body)() as ConsoleEntry[];
+      const logs = executeCode({ code: await transformTS(code), constants: constants ? await transformTS(constants) : undefined });
       self.postMessage({ type: 'console-result', logs } as WorkerResponse);
       return;
     }
 
     if (type !== 'run') return;
     const { testCode, testCases } = event.data as WorkerRequest & { testCode: string; testCases: unknown[] };
-
-    const userJsCode = stripModuleSyntax(await transformTS(code));
-
-    let constantsJsCode = '';
-    if (constants) {
-      constantsJsCode = stripModuleSyntax(await transformTS(constants));
-    }
-
-    const testCodeBody = stripTestImports(await transformTS(testCode));
-
-    const body = [
-      VITEST_MOCK,
-      constantsJsCode,
-      userJsCode,
-      `var testCases = ${JSON.stringify(testCases)};`,
-      testCodeBody,
-      'return __testResults;',
-    ].join('\n');
-
-    const rawResults = new Function(body)() as { name: string; input: unknown[]; expected: unknown; actual: unknown; passed: boolean; reason?: string }[];
-
-    const results: TestResult[] = rawResults.map((r) => ({
+    const resultObj = runTest({
+      code: await transformTS(code),
+      constants: constants ? await transformTS(constants) : undefined,
+      testCode: await transformTS(testCode),
+      testCases,
+    });
+    const results: TestResult[] = resultObj.results.map((r: any) => ({
       name: r.name,
       input: r.input ?? [],
       expected: r.expected,
@@ -191,8 +205,7 @@ self.onmessage = async (event) => {
       passed: r.passed,
       reason: r.reason,
     }));
-
-    self.postMessage({ type: 'result', results } as WorkerResponse);
+    self.postMessage({ type: 'result', results, logs: resultObj.logs } as WorkerResponse);
   } catch (err) {
     self.postMessage({
       type: 'error',

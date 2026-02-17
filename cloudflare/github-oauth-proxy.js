@@ -1,5 +1,5 @@
 
-const ALLOWED_ORIGIN = 'https://sazanamiNiki.github.io';
+const ALLOWED_ORIGIN = 'https://sazanaminiki.github.io';
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': ALLOWED_ORIGIN,

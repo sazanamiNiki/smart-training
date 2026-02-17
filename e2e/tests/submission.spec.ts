@@ -57,4 +57,24 @@ test.describe('提出機能', () => {
 
     await expect(app.submissionArea).not.toBeVisible();
   });
+
+  test('回答済みユーザーには「回答済み」が表示され提出エリアが表示されない', async ({ page }) => {
+    await page.addInitScript(() => {
+      localStorage.setItem('smart-training:github_token', 'fake-token-for-testing');
+      localStorage.setItem('smart-training:github_user', 'bunchoNiki');
+    });
+    const app = new AppPage(page);
+    await app.goto();
+
+    const answerCode = readFileSync(ANSWER_PATH, 'utf-8');
+    await app.setEditorCode(answerCode);
+    await app.runTests(90000);
+
+    const passText = await app.passCount.textContent();
+    const [passed, total] = (passText ?? '').split(' / ').map((s) => parseInt(s, 10));
+    expect(passed).toBe(total);
+
+    await expect(page.getByText('回答済み')).toBeVisible();
+    await expect(app.submissionArea).not.toBeVisible();
+  });
 });
