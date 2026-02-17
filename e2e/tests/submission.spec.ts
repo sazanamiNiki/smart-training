@@ -28,6 +28,11 @@ test.describe('提出機能', () => {
     expect(passed).toBe(total);
 
     await expect(app.submissionArea).toBeVisible();
+
+    await app.githubAuthButton.click();
+    await expect(app.userCode).toBeVisible({ timeout: 15000 });
+    const code = await app.userCode.textContent();
+    expect(code).toBeTruthy();
   });
 
   test('全テスト PASS 後に GitHub 認証ボタンが表示される', async ({ page }) => {

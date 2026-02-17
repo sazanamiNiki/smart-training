@@ -21,6 +21,7 @@ const PendingView = ({
     </Typography>
     <Typography
       sx={{ fontFamily: 'monospace', fontSize: 24, fontWeight: 700, letterSpacing: 4 }}
+      data-testid="user-code"
     >
       {userCode}
     </Typography>
@@ -89,6 +90,7 @@ const AuthenticatedView = ({
           disabled={submitting}
           onClick={() => onSubmit(quId, code, description)}
           startIcon={submitting ? <CircularProgress size={14} color="inherit" /> : undefined}
+          data-testid="submit-button"
         >
           提出する
         </Button>
@@ -129,7 +131,7 @@ const SubmissionArea = ({ quId, code }: Props) => {
   }
 
   return (
-    <Box sx={{ p: 2, borderTop: '1px solid', borderColor: 'divider' }}>
+    <Box data-testid="submission-area" sx={{ p: 2, borderTop: '1px solid', borderColor: 'divider' }}>
       {authStatus === 'idle' && (
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
           <Typography fontWeight="700">
@@ -140,7 +142,8 @@ const SubmissionArea = ({ quId, code }: Props) => {
             size="small"
             color='inherit'
             onClick={startAuth}
-            startIcon={<img src="/assets/img/GitHub_Invertocat_White.svg" alt="GitHub-icon" style={{ height: 16 }} />}
+            data-testid="github-auth-button"
+            startIcon={<img src={`${import.meta.env.BASE_URL}assets/img/GitHub_Invertocat_White.svg`} alt="GitHub-icon" style={{ height: 16 }} />}
           >
             GitHub で認証する
           </Button>
