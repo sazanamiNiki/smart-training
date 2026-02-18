@@ -7,12 +7,21 @@ export interface Answer {
   description?: string;
 }
 
-
-
 let answerMetaCache: Array<{ quId: string; answerId: string; hasDescription: boolean }> | null = null;
 const answerDetailCache: Record<string, Answer> = {};
-const baseUrlRaw = (import.meta.env.BASE_URL ?? '/').replace(/\/$/, '');
-const baseUrl = baseUrlRaw.endsWith('/dev') ? baseUrlRaw.slice(0, -4) : baseUrlRaw;
+
+/**
+ * Resolve the base URL for fetching answer assets.
+ *
+ * In dev mode Vite may append `/dev` to BASE_URL – strip it so answer
+ * asset paths resolve correctly against the static file server root.
+ */
+function getBaseUrl(): string {
+  const raw = (import.meta.env.BASE_URL ?? '/').replace(/\/$/, '');
+  return raw.endsWith('/dev') ? raw.slice(0, -4) : raw;
+}
+
+const baseUrl = getBaseUrl();
 
 /**
  * answers/answers-index.jsonからメタ情報のみ取得

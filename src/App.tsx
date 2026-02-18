@@ -20,6 +20,7 @@ import {
 } from './services/storage.service';
 import { GitHubAuthProvider } from './contexts/GitHubAuthContext';
 import { createAppTheme, applyCssVariables } from './theme';
+import { usePersistedState } from './hooks/usePersistedState';
 
 type AppContentProps = {
   colorMode: 'dark' | 'light';
@@ -30,19 +31,8 @@ function AppContent({ colorMode, onColorModeChange }: AppContentProps) {
   const [selectedId, setSelectedId] = useState<string>(
     () => loadSelectedProblemId() ?? problems[0].id
   );
-  const [layoutFlipped, setLayoutFlipped] = useState<boolean>(() => loadLayoutFlipped());
-
-  const handleLayoutFlip = (flipped: boolean) => {
-    setLayoutFlipped(flipped);
-    saveLayoutFlipped(flipped);
-  };
-
-  const [editorFontSize, setEditorFontSize] = useState<number>(() => loadEditorFontSize());
-
-  const handleEditorFontSizeChange = (size: number) => {
-    setEditorFontSize(size);
-    saveEditorFontSize(size);
-  };
+  const [layoutFlipped, setLayoutFlipped] = usePersistedState(loadLayoutFlipped, saveLayoutFlipped);
+  const [editorFontSize, setEditorFontSize] = usePersistedState(loadEditorFontSize, saveEditorFontSize);
 
   const handleColorModeChange = (mode: 'dark' | 'light') => {
     onColorModeChange(mode);
@@ -64,9 +54,9 @@ function AppContent({ colorMode, onColorModeChange }: AppContentProps) {
         selectedId={selectedId}
         onProblemChange={handleProblemChange}
         layoutFlipped={layoutFlipped}
-        onLayoutFlip={handleLayoutFlip}
+        onLayoutFlip={setLayoutFlipped}
         editorFontSize={editorFontSize}
-        onEditorFontSizeChange={handleEditorFontSizeChange}
+        onEditorFontSizeChange={setEditorFontSize}
         colorMode={colorMode}
         onColorModeChange={handleColorModeChange}
       />

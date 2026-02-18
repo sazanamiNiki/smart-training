@@ -1,143 +1,155 @@
 import type { SessionState } from '../types';
 
-const SESSION_KEY = 'smart-training:session';
+// ---------------------------------------------------------------------------
+// Generic localStorage helpers
+// ---------------------------------------------------------------------------
 
-export function loadSession(): SessionState | null {
+/** JSON-serialize and save a value to localStorage. Silently ignores errors. */
+function saveItem<T>(key: string, value: T): void {
   try {
-    const raw = localStorage.getItem(SESSION_KEY);
-    if (!raw) return null;
-    return JSON.parse(raw) as SessionState;
+    localStorage.setItem(key, JSON.stringify(value));
   } catch {
-    return null;
+    // noop – quota exceeded or private browsing
   }
 }
 
-export function saveSession(state: SessionState): void {
+/** Load and JSON-parse a value from localStorage. Returns `fallback` on miss or error. */
+function loadItem<T>(key: string, fallback: T): T {
   try {
-    localStorage.setItem(SESSION_KEY, JSON.stringify(state));
+    const raw = localStorage.getItem(key);
+    if (raw === null) return fallback;
+    return JSON.parse(raw) as T;
+  } catch {
+    return fallback;
+  }
+}
+
+/** Save a raw string value (no JSON wrapping). */
+function saveRawItem(key: string, value: string): void {
+  try {
+    localStorage.setItem(key, value);
   } catch {
     // noop
   }
 }
 
+/** Load a raw string value. Returns `null` on miss. */
+function loadRawItem(key: string): string | null {
+  return localStorage.getItem(key);
+}
+
+// ---------------------------------------------------------------------------
+// Storage keys
+// ---------------------------------------------------------------------------
+
+const SESSION_KEY = 'smart-training:session';
+const LAYOUT_FLIP_KEY = 'smart-training:layout_flipped';
+const EDITOR_FONT_SIZE_KEY = 'smart-training:editor_font_size';
+const COLOR_MODE_KEY = 'smart-training:color_mode';
+const GITHUB_TOKEN_KEY = 'smart-training:github_token';
+const GITHUB_USER_KEY = 'smart-training:github_user';
+
+const DEFAULT_EDITOR_FONT_SIZE = 14;
+
+// ---------------------------------------------------------------------------
+// Session (problem selection + per-problem code)
+// ---------------------------------------------------------------------------
+
+/** Load the full session object. */
+export function loadSession(): SessionState | null {
+  return loadItem<SessionState | null>(SESSION_KEY, null);
+}
+
+/** Save the full session object. */
+export function saveSession(state: SessionState): void {
+  saveItem(SESSION_KEY, state);
+}
+
+/** Persist user code for a specific problem. */
 export function saveProblemCode(problemId: string, code: string): void {
   const session = loadSession() ?? { selectedProblemId: problemId, codes: {} };
   session.codes[problemId] = code;
   saveSession(session);
 }
 
+/** Load saved code for a specific problem. */
 export function loadProblemCode(problemId: string): string | null {
   return loadSession()?.codes[problemId] ?? null;
 }
 
+/** Persist the currently selected problem ID. */
 export function saveSelectedProblemId(id: string): void {
   const session = loadSession() ?? { selectedProblemId: id, codes: {} };
   session.selectedProblemId = id;
   saveSession(session);
 }
 
+/** Load the last selected problem ID. */
 export function loadSelectedProblemId(): string | null {
   return loadSession()?.selectedProblemId ?? null;
 }
 
-const LAYOUT_FLIP_KEY = 'smart-training:layout_flipped';
-const EDITOR_FONT_SIZE_KEY = 'smart-training:editor_font_size';
-const DEFAULT_EDITOR_FONT_SIZE = 14;
-const COLOR_MODE_KEY = 'smart-training:color_mode';
+// ---------------------------------------------------------------------------
+// UI preferences
+// ---------------------------------------------------------------------------
 
-/** Save layout flip preference to localStorage. */
+/** Save layout flip preference. */
 export function saveLayoutFlipped(flipped: boolean): void {
-  try {
-    localStorage.setItem(LAYOUT_FLIP_KEY, JSON.stringify(flipped));
-  } catch {
-    // noop
-  }
+  saveItem(LAYOUT_FLIP_KEY, flipped);
 }
 
-/** Save editor font size preference to localStorage. */
-export function saveEditorFontSize(size: number): void {
-  try {
-    localStorage.setItem(EDITOR_FONT_SIZE_KEY, JSON.stringify(size));
-  } catch {
-    // noop
-  }
-}
-
-/** Load editor font size preference from localStorage. */
-export function loadEditorFontSize(): number {
-  try {
-    const raw = localStorage.getItem(EDITOR_FONT_SIZE_KEY);
-    if (!raw) return DEFAULT_EDITOR_FONT_SIZE;
-    return JSON.parse(raw) as number;
-  } catch {
-    return DEFAULT_EDITOR_FONT_SIZE;
-  }
-}
-
-/** Load layout flip preference from localStorage. */
+/** Load layout flip preference. */
 export function loadLayoutFlipped(): boolean {
-  try {
-    const raw = localStorage.getItem(LAYOUT_FLIP_KEY);
-    if (!raw) return false;
-    return JSON.parse(raw) as boolean;
-  } catch {
-    return false;
-  }
+  return loadItem(LAYOUT_FLIP_KEY, false);
 }
 
-/** Save color mode preference to localStorage. */
+/** Save editor font size preference. */
+export function saveEditorFontSize(size: number): void {
+  saveItem(EDITOR_FONT_SIZE_KEY, size);
+}
+
+/** Load editor font size preference. */
+export function loadEditorFontSize(): number {
+  return loadItem(EDITOR_FONT_SIZE_KEY, DEFAULT_EDITOR_FONT_SIZE);
+}
+
+/** Save color mode preference (`'dark'` | `'light'`). */
 export function saveColorMode(mode: 'dark' | 'light'): void {
-  try {
-    localStorage.setItem(COLOR_MODE_KEY, mode);
-  } catch {
-    // noop
-  }
+  saveRawItem(COLOR_MODE_KEY, mode);
 }
 
-/** Load color mode preference from localStorage. */
+/** Load color mode preference. Defaults to `'dark'`. */
 export function loadColorMode(): 'dark' | 'light' {
-  try {
-    const raw = localStorage.getItem(COLOR_MODE_KEY);
-    if (raw === 'light' || raw === 'dark') return raw;
-    return 'dark';
-  } catch {
-    return 'dark';
-  }
+  const raw = loadRawItem(COLOR_MODE_KEY);
+  return raw === 'light' || raw === 'dark' ? raw : 'dark';
 }
 
-const GITHUB_TOKEN_KEY = 'smart-training:github_token';
-const GITHUB_USER_KEY = 'smart-training:github_user';
+// ---------------------------------------------------------------------------
+// GitHub authentication
+// ---------------------------------------------------------------------------
 
-/** Save GitHub OAuth access token to localStorage. */
+/** Save GitHub OAuth access token. */
 export function saveGitHubToken(token: string): void {
-  try {
-    localStorage.setItem(GITHUB_TOKEN_KEY, token.trim());
-  } catch {
-    // noop
-  }
+  saveRawItem(GITHUB_TOKEN_KEY, token.trim());
 }
 
 /** Load cached GitHub OAuth access token. */
 export function loadGitHubToken(): string | null {
-  return localStorage.getItem(GITHUB_TOKEN_KEY);
+  return loadRawItem(GITHUB_TOKEN_KEY);
 }
 
-/** Remove cached GitHub OAuth access token. */
+/** Remove cached GitHub credentials (token + username). */
 export function clearGitHubToken(): void {
   localStorage.removeItem(GITHUB_TOKEN_KEY);
   localStorage.removeItem(GITHUB_USER_KEY);
 }
 
-/** Save authenticated GitHub username to localStorage. */
+/** Save authenticated GitHub username. */
 export function saveGitHubUser(user: string): void {
-  try {
-    localStorage.setItem(GITHUB_USER_KEY, user);
-  } catch {
-    // noop
-  }
+  saveRawItem(GITHUB_USER_KEY, user);
 }
 
 /** Load cached GitHub username. */
 export function loadGitHubUser(): string | null {
-  return localStorage.getItem(GITHUB_USER_KEY);
+  return loadRawItem(GITHUB_USER_KEY);
 }

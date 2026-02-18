@@ -33,12 +33,16 @@ smart-training/
 │   ├── contexts/
 │   │   └── GitHubAuthContext.tsx   # GitHub認証コンテキスト
 │   ├── hooks/
-│   │   └── useGitHubSubmission.ts # Device Flow認証 + 提出ロジック
+│   │   ├── useGitHubSubmission.ts # Device Flow認証 + 提出ロジック
+│   │   └── usePersistedState.ts  # localStorage自動永続化フック
 │   ├── services/
 │   │   ├── esbuild.service.ts     # esbuild-wasm初期化・TSトランスパイル
-│   │   └── storage.service.ts     # localStorage CRUD
+│   │   └── storage.service.ts     # localStorage CRUD（ジェネリックヘルパー）
 │   ├── workers/
-│   │   └── executor.worker.ts     # Web Worker: コンパイル→実行→結果返却
+│   │   ├── executor.worker.ts     # Web Worker: コンパイル→実行→結果返却
+│   │   └── mocks/
+│   │       ├── vitest-mock.ts     # Vitest互換テストランタイムモック
+│   │       └── console-mock.ts    # console.logキャプチャモック
 │   ├── problems/
 │   │   ├── index.ts               # import.meta.glob で問題を自動収集
 │   │   └── answers.ts             # コミュニティ回答のfetch+キャッシュ
@@ -46,6 +50,7 @@ smart-training/
 │       ├── INDEX.md               # コンポーネント目次
 │       ├── Header/                # ヘッダー・設定・問い合わせ（*.module.css）
 │       ├── Editor/                # Monacoエディタ・コンソール（*.module.css）
+│       │   └── hooks/useWorker.ts  # Worker通信管理フック
 │       ├── Results/               # テスト結果一覧・提出（*.module.css）
 │       │   └── TestResultRow.tsx   # テスト行コンポーネント（分離済み）
 │       ├── ResultsPanel/          # 3タブパネル（*.module.css）
