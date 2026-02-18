@@ -1,9 +1,10 @@
 import { useMemo, useState, useEffect } from 'react';
-import { Box, FormControl, InputLabel, MenuItem, Select, Typography } from '@mui/material';
+import { FormControl, InputLabel, MenuItem, Select, Typography } from '@mui/material';
 import type { SelectChangeEvent } from '@mui/material';
 import { Answer, fetchAnswerMeta, fetchAnswerDetail } from '../../problems/answers';
 import AnswerItem from './AnswerItem';
 import type { CommunityAnswersProps } from './types';
+import styles from './CommunityAnswers.module.css';
 
 /**
  * Display community answers for a given question with a respondent selector.
@@ -42,16 +43,16 @@ export default function CommunityAnswers({ quId }: CommunityAnswersProps) {
 
   if (answers.length === 0) {
     return (
-      <Box sx={{ flex: 1, overflow: 'auto', p: 2 }}>
+      <div className={styles.emptyWrap}>
         <Typography variant="body2" color="text.secondary">
           まだ回答がありません
         </Typography>
-      </Box>
+      </div>
     );
   }
 
   return (
-    <Box data-testid="community-answers" sx={{ flex: 1, overflow: 'hidden', p: 2, display: 'flex', flexDirection: 'column', gap: 2, minHeight: 0 }}>
+    <div data-testid="community-answers" className={styles.root}>
       <FormControl size="small" fullWidth>
         <InputLabel id="answerer-select-label">回答者</InputLabel>
         <Select
@@ -69,6 +70,6 @@ export default function CommunityAnswers({ quId }: CommunityAnswersProps) {
       </FormControl>
 
       {selectedAnswer && <AnswerItem answer={selectedAnswer} />}
-    </Box>
+    </div>
   );
 }

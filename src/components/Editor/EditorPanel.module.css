@@ -1,0 +1,46 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--color-divider);
+  background-color: var(--bg-paper);
+  flex-shrink: 0;
+  & > div {
+    display: flex;
+    align-items: center;
+    gap: 8px
+  }
+}
+
+
+.title {
+  font-weight: 600;
+}
+
+.mode {
+  margin-right: auto;
+}
+
+.testBtn {
+  color: #fff!important;
+}
+
+.editorWrap {
+  flex: 1;
+  overflow: hidden;
+}
+
+.footer {
+  padding: 8px 16px;
+  border-top: 1px solid var(--color-divider);
+  background-color: var(--bg-paper);
+  flex-shrink: 0;
+}

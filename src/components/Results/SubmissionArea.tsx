@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { Box, Button, CircularProgress, TextField, Typography } from '@mui/material';
+import { Button, CircularProgress, TextField, Typography } from '@mui/material';
 import { useGitHubAuth } from '../../contexts/GitHubAuthContext';
+import styles from './SubmissionArea.module.css';
 
 type Props = {
   quId: string;
@@ -15,12 +16,12 @@ const PendingView = ({
   userCode: string;
   verificationUri: string;
 }) => (
-  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+  <div className={styles.column}>
     <Typography variant="body2" color="text.secondary">
       以下のコードを GitHub で入力してください
     </Typography>
     <Typography
-      sx={{ fontFamily: 'monospace', fontSize: 24, fontWeight: 700, letterSpacing: 4 }}
+      className={styles.authCode}
       data-testid="user-code"
     >
       {userCode}
@@ -34,13 +35,13 @@ const PendingView = ({
     >
       GitHub で確認する
     </Button>
-    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+    <div className={styles.pendingRow}>
       <CircularProgress size={14} />
       <Typography variant="body2" color="text.secondary">
         認証待機中…
       </Typography>
-    </Box>
-  </Box>
+    </div>
+  </div>
 );
 
 /** Render solution description input and submit/skip buttons. */
@@ -65,7 +66,7 @@ const AuthenticatedView = ({
   if (skipped) return null;
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+    <div className={styles.column}>
       <Typography variant="body2" color="text.secondary">
         {githubUser} として提出します
       </Typography>
@@ -83,7 +84,7 @@ const AuthenticatedView = ({
           {submitError}
         </Typography>
       )}
-      <Box sx={{ display: 'flex', gap: 2 }}>
+      <div className={styles.submitRow}>
         <Button
           variant="contained"
           color="success"
@@ -97,8 +98,8 @@ const AuthenticatedView = ({
         <Button variant="outlined" disabled={submitting} onClick={() => setSkipped(true)}>
           スキップ
         </Button>
-      </Box>
-    </Box>
+      </div>
+    </div>
   );
 };
 
@@ -122,18 +123,18 @@ const SubmissionArea = ({ quId, code }: Props) => {
 
   if (submitSuccess) {
     return (
-      <Box sx={{ p: 2, borderTop: '1px solid', borderColor: 'divider' }}>
+      <div className={styles.section}>
         <Typography variant="body2" color="success.main">
           提出しました！ static/{quId}/{githubUser}/
         </Typography>
-      </Box>
+      </div>
     );
   }
 
   return (
-    <Box data-testid="submission-area" sx={{ p: 2, borderTop: '1px solid', borderColor: 'divider' }}>
+    <div data-testid="submission-area" className={styles.section}>
       {authStatus === 'idle' && (
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+        <div className={styles.column}>
           <Typography fontWeight="700">
             {'GitHub で認証して自分の回答を共有しよう'}
           </Typography>
@@ -147,7 +148,7 @@ const SubmissionArea = ({ quId, code }: Props) => {
           >
             GitHub で認証する
           </Button>
-        </Box>
+        </div>
       )}
 
       {authStatus === 'pending' && deviceFlowData && (
@@ -158,14 +159,14 @@ const SubmissionArea = ({ quId, code }: Props) => {
       )}
 
       {authStatus === 'error' && (
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+        <div className={styles.errorColumn}>
           <Typography variant="body2" color="error">
             {submitError}
           </Typography>
           <Button variant="outlined" size="small" onClick={startAuth}>
             再認証する
           </Button>
-        </Box>
+        </div>
       )}
 
       {authStatus === 'authenticated' && githubUser && (
@@ -178,7 +179,7 @@ const SubmissionArea = ({ quId, code }: Props) => {
           onSubmit={submit}
         />
       )}
-    </Box>
+    </div>
   );
 };
 

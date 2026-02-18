@@ -10,6 +10,7 @@ import {
   Typography,
 } from '@mui/material';
 import { useGitHubAuth } from '../../contexts/GitHubAuthContext';
+import styles from './InquiryDialog.module.css';
 
 const GAS_BASE_URL =
   'https://script.google.com/macros/s/AKfycbxhWtyDaC3Gxw8ebudMaPTa52MbMCEzqGqhlWlIYDF8Q2hWfvhD-goQptfnz5ZBbW5l/exec';
@@ -67,7 +68,7 @@ export default function InquiryDialog({ open, onClose, mode }: Props) {
   return (
     <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm">
       <DialogTitle>{mode === 'contact' ? 'お問い合わせ' : '機能追加要望'}</DialogTitle>
-      <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 2 }}>
+        <DialogContent className={styles.content}>
         {sent ? (
           <Typography variant="body1" color="success.main">
             送信しました。ありがとうございます。
@@ -96,7 +97,7 @@ export default function InquiryDialog({ open, onClose, mode }: Props) {
           </>
         )}
       </DialogContent>
-      <DialogActions sx={{ px: 3, pb: 2 }}>
+        <DialogActions className={styles.actions}>
         <Button variant="outlined" onClick={handleClose} disabled={sending}>
           {sent ? '閉じる' : 'キャンセル'}
         </Button>

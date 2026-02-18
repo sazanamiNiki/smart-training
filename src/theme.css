@@ -1,0 +1,51 @@
+/* ============================================================
+ * CSS Custom Properties – generated from theme.ts palette tokens.
+ * These variables are set on :root by ThemeVarsInjector and
+ * consumed by CSS Modules throughout the application.
+ * ============================================================ */
+
+:root {
+  /* --- background --- */
+  --bg-default: #0f172a;
+  --bg-paper: #111827;
+
+  /* --- text --- */
+  --text-primary: #e5e7eb;
+  --text-secondary: #9ca3af;
+  --text-disabled: rgba(255, 255, 255, 0.5);
+
+  /* --- semantic colors --- */
+  --color-primary: #3b82f6;
+  --color-success: #22c55e;
+  --color-error: #ef4444;
+  --color-warning: #f59e0b;
+
+  /* --- borders / dividers --- */
+  --color-divider: #1f2937;
+  --color-border: #1f2937;
+
+  /* --- action --- */
+  --action-hover: rgba(255, 255, 255, 0.08);
+
+  /* --- spacing base (px) --- */
+  --spacing: 8px;
+
+  /* --- shape --- */
+  --radius: 8px;
+
+  /* --- font family --- */
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+
+  /* --- font sizes --- */
+  --fs-h1: 1.25rem;
+  --fs-h2: 1.125rem;
+  --fs-body1: 0.875rem;
+  --fs-body2: 0.75rem;
+  --fs-caption: 0.75rem;
+
+  /* --- code block backgrounds --- */
+  --code-bg: rgba(110, 118, 129, 0.4);
+  --pre-bg: #161b22;
+  --table-stripe-bg: #0d1117;
+}

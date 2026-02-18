@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
-import { Box, Typography } from '@mui/material';
+import { Typography } from '@mui/material';
 import type { AnswerItemProps } from './types';
 import { Editor } from '@monaco-editor/react';
 import ReactMarkdown from 'react-markdown';
 import { MarkdownWrapper } from '../MarkdownWrapper/MarkdownWrapper';
+import styles from './AnswerItem.module.css';
 
 /**
  * Render a single community answer entry.
@@ -17,49 +18,29 @@ export default function AnswerItem({ answer }: AnswerItemProps) {
   const hasDescription = Boolean(answer.description);
 
   return (
-    <Box
+    <div
       data-testid="answer-item"
-      sx={{
-        flex: 1,
-        minHeight: 0,
-        display: 'flex',
-        flexDirection: 'column',
-        border: '1px solid',
-        borderColor: 'divider',
-        borderRadius: 1,
-        overflow: 'hidden',
-      }}
+      className={styles.root}
     >
       {hasDescription && (
-        <Box
+        <div
           onClick={() => setOpen(!open)}
-          sx={{
-            flexShrink: 0,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            px: 2,
-            py: 0.5,
-            cursor: 'pointer',
-            borderBottom: '1px solid',
-            borderColor: 'divider',
-            '&:hover': { bgcolor: 'action.hover' },
-          }}
+          className={styles.descriptionToggle}
         >
           <Typography variant="caption" color="text.secondary">
             解説
           </Typography>
-          {open ? <ExpandLessIcon sx={{ fontSize: 16 }} /> : <ExpandMoreIcon sx={{ fontSize: 16 }} />}
-        </Box>
+          {open ? <ExpandLessIcon className={styles.expandIcon} /> : <ExpandMoreIcon className={styles.expandIcon} />}
+        </div>
       )}
 
-      <Box sx={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', margin: '4px' }}>
+      <div className={styles.content}>
         {hasDescription && open && (
           <MarkdownWrapper height={'30%'}>
             <ReactMarkdown data-testid="tabDescription">{answer.description ?? ''}</ReactMarkdown>
           </MarkdownWrapper>
         )}
-        <Box sx={{ flex: 7, minHeight: 0 }}>
+        <div className={styles.editorWrap}>
           <Editor
             height="100%"
             value={answer.code}
@@ -81,8 +62,8 @@ export default function AnswerItem({ answer }: AnswerItemProps) {
               },
             }}
           />
-        </Box>
-      </Box>
-    </Box>
+        </div>
+      </div>
+    </div>
   );
 }

@@ -1,5 +1,4 @@
 import {
-  Box,
   Dialog,
   DialogContent,
   DialogTitle,
@@ -13,6 +12,7 @@ import {
 } from '@mui/material';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
 import LightModeIcon from '@mui/icons-material/LightMode';
+import styles from './SettingsDialog.module.css';
 
 const FONT_SIZE_OPTIONS = [12, 13, 14, 15, 16, 18, 20];
 
@@ -53,12 +53,12 @@ export default function SettingsDialog({
     <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
       <DialogTitle>設定</DialogTitle>
       <DialogContent>
-        <Box sx={{ mb: 2 }}>
+        <div className={styles.betaNotice}>
           <Typography variant="caption" fontWeight={'700'}>
               <span>ベータ版: 設定はこのブラウザのみに保存されます。</span><br />
           </Typography>
-        </Box>
-        <Box sx={{ mb: 1 }}>
+        </div>
+        <div className={styles.colorModeRow}>
           <FormControl size="small" fullWidth>
             <InputLabel>カラーモード</InputLabel>
             <Select
@@ -67,20 +67,20 @@ export default function SettingsDialog({
               onChange={(e) => onColorModeChange(e.target.value as 'dark' | 'light')}
             >
               <MenuItem value="dark">
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <div className={styles.menuItemRow}>
                   <DarkModeIcon fontSize="small" />
                   ダーク
-                </Box>
+                </div>
               </MenuItem>
               <MenuItem value="light">
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <div className={styles.menuItemRow}>
                   <LightModeIcon fontSize="small" />
                   ライト
-                </Box>
+                </div>
               </MenuItem>
             </Select>
           </FormControl>
-        </Box>
+        </div>
         <FormControlLabel
           control={
             <Switch
@@ -90,7 +90,7 @@ export default function SettingsDialog({
           }
           label="エディタを右側に表示"
         />
-        <Box sx={{ mt: 2 }}>
+        <div className={styles.fontSizeRow}>
           <FormControl size="small" fullWidth>
             <InputLabel>エディタフォントサイズ</InputLabel>
             <Select
@@ -105,7 +105,7 @@ export default function SettingsDialog({
               ))}
             </Select>
           </FormControl>
-        </Box>
+        </div>
       </DialogContent>
     </Dialog>
   );

@@ -1,0 +1,67 @@
+.row {
+  padding: 8px;
+  gap: 12px;
+}
+
+.passLabel {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  flex-shrink: 0;
+  color: var(--color-success);
+}
+
+.failLabel {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  flex-shrink: 0;
+  color: var(--color-error);
+}
+
+.resultName {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text-secondary);
+}
+
+.expandIcon {
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.detailPass {
+  padding: 12px 16px 12px 24px;
+  border-left: 2px solid var(--color-success);
+}
+
+.detailFail {
+  padding: 12px 16px 12px 24px;
+  border-left: 2px solid var(--color-error);
+}
+
+.detailLine {
+  font-family: var(--font-mono);
+  line-height: 2;
+}
+
+.detailLabel {
+  color: var(--text-primary);
+  margin-right: 8px;
+}
+
+.detailValue {
+  color: var(--text-secondary);
+}
+
+.errorText {
+  font-family: var(--font-mono);
+  color: var(--color-error);
+  margin-top: 4px;
+}
+
+.warningText {
+  font-family: var(--font-mono);
+  color: var(--color-warning);
+  margin-top: 4px;
+}
