@@ -1,4 +1,5 @@
-import { test, expect } from '@playwright/test';
+import { expect, test } from '@playwright/test';
+
 import { AppPage } from '../pages/AppPage';
 
 test.describe('エディター実行機能', () => {
@@ -10,11 +11,7 @@ test.describe('エディター実行機能', () => {
     const app = new AppPage(page);
     await app.goto();
 
-    await app.setEditorCode([
-      "console.log('Hello E2E');",
-      "console.log(42);",
-      "export const main = (hand: string): string => hand;",
-    ].join('\n'));
+    await app.setEditorCode(["console.log('Hello E2E');", 'console.log(42);', 'export const main = (hand: string): string => hand;'].join('\n'));
 
     await app.executeCode();
 

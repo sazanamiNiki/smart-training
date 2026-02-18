@@ -1,4 +1,4 @@
-import { type Page, type Locator, expect } from '@playwright/test';
+import { type Locator, type Page, expect } from '@playwright/test';
 
 /**
  * Page Object Model for the Smart Training application.
@@ -70,17 +70,12 @@ export class AppPage {
    * @param code - TypeScript source code to place in the editor.
    */
   async setEditorCode(code: string) {
-    await this.page.waitForFunction(
-      () => (window as unknown as { monaco?: unknown }).monaco !== undefined,
-      { timeout: 30000 }
-    );
+    await this.page.waitForFunction(() => (window as unknown as { monaco?: unknown }).monaco !== undefined, { timeout: 30000 });
     await this.page.evaluate((c: string) => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const win = window as any;
       const editors: any[] = win.monaco?.editor?.getEditors?.() ?? [];
-      const writableEditor = editors.find(
-        (e) => !e.getOption(win.monaco.editor.EditorOption.readOnly)
-      );
+      const writableEditor = editors.find((e) => !e.getOption(win.monaco.editor.EditorOption.readOnly));
       writableEditor?.setValue(c);
     }, code);
   }

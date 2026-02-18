@@ -1,18 +1,13 @@
-import { useState } from 'react';
-import {
-  FormControl,
-  IconButton,
-  Menu,
-  MenuItem,
-  Select,
-  Typography,
-} from '@mui/material';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
-import type { Problem } from '../../types';
+import { FormControl, IconButton, Menu, MenuItem, Select, Typography } from '@mui/material';
+
+import { useState } from 'react';
+
 import { useGitHubAuth } from '../../contexts/GitHubAuthContext';
+import type { Problem } from '../../types';
+import styles from './HeaderBar.module.css';
 import InquiryDialog from './InquiryDialog';
 import SettingsDialog from './SettingsDialog';
-import styles from './HeaderBar.module.css';
 
 type Props = {
   problems: Problem[];
@@ -81,10 +76,7 @@ export default function HeaderBar({
       <div className={styles.header}>
         <Typography variant="h2">Smart Training</Typography>
         <FormControl size="small" className={styles.selector}>
-          <Select
-            value={selectedId}
-            onChange={(e) => onProblemChange(e.target.value)}
-          >
+          <Select value={selectedId} onChange={(e) => onProblemChange(e.target.value)}>
             {problems.map((p) => (
               <MenuItem key={p.id} value={p.id}>
                 {p.quId} - {p.title}

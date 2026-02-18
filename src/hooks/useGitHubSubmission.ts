@@ -1,17 +1,11 @@
-import { useState, useCallback, useEffect } from 'react';
 import { Octokit } from '@octokit/rest';
-import {
-  saveGitHubToken,
-  loadGitHubToken,
-  clearGitHubToken,
-  saveGitHubUser,
-  loadGitHubUser,
-} from '../services/storage.service';
+
+import { useCallback, useEffect, useState } from 'react';
+
+import { clearGitHubToken, loadGitHubToken, loadGitHubUser, saveGitHubToken, saveGitHubUser } from '../services/storage.service';
 
 const CLIENT_ID = import.meta.env.VITE_GITHUB_CLIENT_ID as string;
-const GITHUB_OAUTH_BASE = import.meta.env.DEV
-  ? '/github-oauth'
-  : (import.meta.env.VITE_GITHUB_PROXY_URL as string);
+const GITHUB_OAUTH_BASE = import.meta.env.DEV ? '/github-oauth' : (import.meta.env.VITE_GITHUB_PROXY_URL as string);
 
 type AuthStatus = 'idle' | 'pending' | 'authenticated' | 'error';
 
@@ -53,11 +47,7 @@ interface AccessTokenResponse {
  * @returns Access token string.
  * @throws {Error} If polling times out, is denied, or encounters an unrecoverable error.
  */
-async function pollForToken(
-  deviceCode: string,
-  interval: number,
-  expiresIn: number
-): Promise<string> {
+async function pollForToken(deviceCode: string, interval: number, expiresIn: number): Promise<string> {
   const deadline = Date.now() + expiresIn * 1000;
   let currentInterval = interval;
 
@@ -76,7 +66,10 @@ async function pollForToken(
     const data: AccessTokenResponse = await res.json();
 
     if (data.access_token) return data.access_token;
-    if (data.error === 'slow_down') { currentInterval += 5; continue; }
+    if (data.error === 'slow_down') {
+      currentInterval += 5;
+      continue;
+    }
     if (data.error === 'authorization_pending') continue;
     if (data.error === 'expired_token') throw new Error('認証がタイムアウトしました。');
     if (data.error === 'access_denied') throw new Error('認証がキャンセルされました。');
@@ -92,9 +85,7 @@ async function pollForToken(
  * @returns Authentication state, device flow data, and submit/startAuth handlers.
  */
 export function useGitHubSubmission(): UseGitHubSubmissionReturn {
-  const [authStatus, setAuthStatus] = useState<AuthStatus>(() =>
-    loadGitHubToken() ? 'authenticated' : 'idle'
-  );
+  const [authStatus, setAuthStatus] = useState<AuthStatus>(() => (loadGitHubToken() ? 'authenticated' : 'idle'));
   const [deviceFlowData, setDeviceFlowData] = useState<DeviceFlowData | null>(null);
   const [githubUser, setGithubUser] = useState<string | null>(() => loadGitHubUser());
   const [submitting, setSubmitting] = useState(false);
@@ -116,8 +107,14 @@ export function useGitHubSubmission(): UseGitHubSubmissionReturn {
     try {
       const res = await fetch(`${GITHUB_OAUTH_BASE}/login/device/code`, {
         method: 'POST',
-        headers: { Accept: 'application/json', 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: new URLSearchParams({ client_id: CLIENT_ID, scope: 'read:user,user:email' }).toString(),
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({
+          client_id: CLIENT_ID,
+          scope: 'read:user,user:email',
+        }).toString(),
       });
       const data: DeviceCodeResponse = await res.json();
 
@@ -142,7 +139,10 @@ export function useGitHubSubmission(): UseGitHubSubmissionReturn {
 
   const submit = useCallback(async (quId: string, code: string, description: string) => {
     const token = loadGitHubToken();
-    if (!token) { setSubmitError('認証が必要です。'); return; }
+    if (!token) {
+      setSubmitError('認証が必要です。');
+      return;
+    }
     setSubmitting(true);
     setSubmitError(null);
     try {

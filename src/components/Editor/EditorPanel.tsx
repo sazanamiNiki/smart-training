@@ -1,11 +1,13 @@
-import { useEffect, useRef } from 'react';
-import { Button, Typography } from '@mui/material';
-import PlayArrowIcon from '@mui/icons-material/PlayArrow';
-import FactCheckIcon from '@mui/icons-material/FactCheck';
 import Editor, { useMonaco } from '@monaco-editor/react';
-import type { EditorPanelProps } from './types';
+import FactCheckIcon from '@mui/icons-material/FactCheck';
+import PlayArrowIcon from '@mui/icons-material/PlayArrow';
+import { Button, Typography } from '@mui/material';
+
+import { useEffect, useRef } from 'react';
+
 import { ConsolePanel } from './ConsolePanel';
 import styles from './EditorPanel.module.css';
+import type { EditorPanelProps } from './types';
 
 export default function EditorPanel({
   problem,
@@ -27,14 +29,8 @@ export default function EditorPanel({
     libRef.current?.dispose();
     libRef.current = null;
     if (problem.constants) {
-      const ambientDecls = problem.constants.replace(
-        /^const\s+(\w+)\s*=\s*('(?:[^'\\]|\\.)*'|"(?:[^"\\]|\\.)*")\s*;?/gm,
-        'declare const $1: $2;'
-      );
-      libRef.current = monaco.typescript.typescriptDefaults.addExtraLib(
-        ambientDecls,
-        'ts:problem-constants.d.ts'
-      );
+      const ambientDecls = problem.constants.replace(/^const\s+(\w+)\s*=\s*('(?:[^'\\]|\\.)*'|"(?:[^"\\]|\\.)*")\s*;?/gm, 'declare const $1: $2;');
+      libRef.current = monaco.typescript.typescriptDefaults.addExtraLib(ambientDecls, 'ts:problem-constants.d.ts');
     }
     return () => {
       libRef.current?.dispose();
@@ -62,17 +58,10 @@ export default function EditorPanel({
             startIcon={<FactCheckIcon />}
             className={styles.testBtn}
             data-testid="test-button"
-            >
+          >
             Test
           </Button>
-          <Button
-            variant="contained"
-            size="small"
-            onClick={execute}
-            disabled={executing || running}
-            startIcon={<PlayArrowIcon />}
-            data-testid="run-button"
-            >
+          <Button variant="contained" size="small" onClick={execute} disabled={executing || running} startIcon={<PlayArrowIcon />} data-testid="run-button">
             Run
           </Button>
         </div>
@@ -88,7 +77,7 @@ export default function EditorPanel({
             fontSize: editorFontSize,
             padding: {
               top: 8,
-              bottom: 8
+              bottom: 8,
             },
             minimap: { enabled: false },
             scrollBeyondLastLine: false,

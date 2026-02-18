@@ -67,8 +67,7 @@ export function createAppTheme(mode: 'dark' | 'light'): Theme {
       divider: p.divider,
     },
     typography: {
-      fontFamily:
-        'ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif',
+      fontFamily: 'ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif',
       h1: { fontSize: '1.25rem', fontWeight: 600 },
       h2: { fontSize: '1.125rem', fontWeight: 600 },
       body1: { fontSize: '0.875rem' },

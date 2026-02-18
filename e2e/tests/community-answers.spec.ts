@@ -1,4 +1,5 @@
-import { test, expect } from '@playwright/test';
+import { expect, test } from '@playwright/test';
+
 import { AppPage } from '../pages/AppPage';
 
 const ANSWER_URL = 'answers/qu1/bunchoNiki/execute.ts';
@@ -63,8 +64,6 @@ test.describe('回答閲覧機能', () => {
 
     await expect(app.answerItem).toBeVisible();
 
-    await expect(
-      page.locator('[data-testid="answer-item"] .monaco-editor')
-    ).toBeVisible();
+    await expect(page.locator('[data-testid="answer-item"] .monaco-editor')).toBeVisible();
   });
 });

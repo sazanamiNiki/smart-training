@@ -1,4 +1,5 @@
 import { Button, Typography } from '@mui/material';
+
 import type { ConsoleEntry } from '../../types';
 import styles from './ConsolePanel.module.css';
 
@@ -24,26 +25,14 @@ export function ConsolePanel({ logs, onClear }: ConsolePanelProps) {
           Clear
         </Button>
       </div>
-      <div
-        data-testid="console-output"
-        className={styles.output}
-      >
+      <div data-testid="console-output" className={styles.output}>
         {logs.length === 0 ? (
-          <Typography
-            variant="caption"
-            className={styles.noOutput}
-          >
+          <Typography variant="caption" className={styles.noOutput}>
             No output
           </Typography>
         ) : (
           logs.map((entry, i) => (
-            <Typography
-              key={i}
-              variant="caption"
-              component="div"
-              className={styles.logEntry}
-              data-type={entry.type}
-            >
+            <Typography key={i} variant="caption" component="div" className={styles.logEntry} data-type={entry.type}>
               {entry.args}
             </Typography>
           ))

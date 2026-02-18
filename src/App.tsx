@@ -1,26 +1,28 @@
-import { useMemo, useState } from 'react';
 import { CssBaseline } from '@mui/material';
 import { ThemeProvider } from '@mui/material/styles';
-import './theme.css';
+
+import { useMemo, useState } from 'react';
+
 import styles from './App.module.css';
-import problems from './problems';
-import { useEditor } from './components/Editor/hooks/useEditor';
 import EditorPanel from './components/Editor/EditorPanel';
-import ResultsPanel from './components/ResultsPanel/ResultsPanel';
+import { useEditor } from './components/Editor/hooks/useEditor';
 import HeaderBar from './components/Header/HeaderBar';
-import {
-  loadSelectedProblemId,
-  saveSelectedProblemId,
-  loadLayoutFlipped,
-  saveLayoutFlipped,
-  loadEditorFontSize,
-  saveEditorFontSize,
-  loadColorMode,
-  saveColorMode,
-} from './services/storage.service';
+import ResultsPanel from './components/ResultsPanel/ResultsPanel';
 import { GitHubAuthProvider } from './contexts/GitHubAuthContext';
-import { createAppTheme, applyCssVariables } from './theme';
 import { usePersistedState } from './hooks/usePersistedState';
+import problems from './problems';
+import {
+  loadColorMode,
+  loadEditorFontSize,
+  loadLayoutFlipped,
+  loadSelectedProblemId,
+  saveColorMode,
+  saveEditorFontSize,
+  saveLayoutFlipped,
+  saveSelectedProblemId,
+} from './services/storage.service';
+import { applyCssVariables, createAppTheme } from './theme';
+import './theme.css';
 
 type AppContentProps = {
   colorMode: 'dark' | 'light';
@@ -28,9 +30,7 @@ type AppContentProps = {
 };
 
 function AppContent({ colorMode, onColorModeChange }: AppContentProps) {
-  const [selectedId, setSelectedId] = useState<string>(
-    () => loadSelectedProblemId() ?? problems[0].id
-  );
+  const [selectedId, setSelectedId] = useState<string>(() => loadSelectedProblemId() ?? problems[0].id);
   const [layoutFlipped, setLayoutFlipped] = usePersistedState(loadLayoutFlipped, saveLayoutFlipped);
   const [editorFontSize, setEditorFontSize] = usePersistedState(loadEditorFontSize, saveEditorFontSize);
 

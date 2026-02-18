@@ -1,4 +1,5 @@
-import { useEffect, useRef, useCallback } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
+
 import type { WorkerRequest, WorkerResponse } from '../../../types';
 
 export interface UseWorkerReturn {
@@ -19,28 +20,22 @@ export function useWorker(): UseWorkerReturn {
   const workerRef = useRef<Worker | null>(null);
 
   useEffect(() => {
-    workerRef.current = new Worker(
-      new URL('../../../workers/executor.worker.ts', import.meta.url),
-      { type: 'module' },
-    );
+    workerRef.current = new Worker(new URL('../../../workers/executor.worker.ts', import.meta.url), { type: 'module' });
     return () => {
       workerRef.current?.terminate();
       workerRef.current = null;
     };
   }, []);
 
-  const postMessage = useCallback(
-    (message: WorkerRequest, onResponse: (data: WorkerResponse) => void) => {
-      const worker = workerRef.current;
-      if (!worker) return;
-      worker.onmessage = (event: MessageEvent<WorkerResponse>) => {
-        worker.onmessage = null;
-        onResponse(event.data);
-      };
-      worker.postMessage(message);
-    },
-    [],
-  );
+  const postMessage = useCallback((message: WorkerRequest, onResponse: (data: WorkerResponse) => void) => {
+    const worker = workerRef.current;
+    if (!worker) return;
+    worker.onmessage = (event: MessageEvent<WorkerResponse>) => {
+      worker.onmessage = null;
+      onResponse(event.data);
+    };
+    worker.postMessage(message);
+  }, []);
 
   return { postMessage, ready: true };
 }

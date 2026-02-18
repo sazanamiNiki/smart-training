@@ -1,12 +1,13 @@
-import { CircularProgress, Typography, List } from '@mui/material';
+import { CircularProgress, List, Typography } from '@mui/material';
+
+import { useEffect, useMemo, useState } from 'react';
+
+import { useGitHubAuth } from '../../contexts/GitHubAuthContext';
+import { Answer, fetchAnswerDetail, fetchAnswerMeta } from '../../problems/answers';
 import { TestResult } from '../../types';
+import styles from './Results.module.css';
 import SubmissionArea from './SubmissionArea';
 import TestResultRow from './TestResultRow';
-import { useGitHubAuth } from '../../contexts/GitHubAuthContext';
-import { Answer, fetchAnswerMeta, fetchAnswerDetail } from '../../problems/answers';
-import styles from './Results.module.css';
-
-import { useState, useEffect, useMemo } from 'react';
 
 type Props = {
   running: boolean;
@@ -26,12 +27,12 @@ export const Results = ({ running, results, code, quId }: Props) => {
     (async () => {
       const metaList = await fetchAnswerMeta();
       const filtered = metaList.filter((m: { quId: string }) => m.quId === quId);
-      const details = await Promise.all(
-        filtered.map((m: { quId: string; answerId: string }) => fetchAnswerDetail(m.quId, m.answerId))
-      );
+      const details = await Promise.all(filtered.map((m: { quId: string; answerId: string }) => fetchAnswerDetail(m.quId, m.answerId)));
       if (mounted) setAnswers(details);
     })();
-    return () => { mounted = false; };
+    return () => {
+      mounted = false;
+    };
   }, [quId]);
 
   const isAlreadySubmitted = useMemo(() => {
@@ -44,9 +45,7 @@ export const Results = ({ running, results, code, quId }: Props) => {
   }, [quId]);
 
   const handleToggle = (idx: number) => {
-    setOpenIndexes((prev) =>
-      prev.includes(idx) ? prev.filter((i) => i !== idx) : [...prev, idx]
-    );
+    setOpenIndexes((prev) => (prev.includes(idx) ? prev.filter((i) => i !== idx) : [...prev, idx]));
   };
 
   return (
@@ -71,18 +70,12 @@ export const Results = ({ running, results, code, quId }: Props) => {
           <div className={styles.listWrap}>
             <List disablePadding>
               {results.map((result, i) => (
-                <TestResultRow
-                  key={i}
-                  result={result}
-                  index={i}
-                  open={openIndexes.includes(i)}
-                  onToggle={handleToggle}
-                />
+                <TestResultRow key={i} result={result} index={i} open={openIndexes.includes(i)} onToggle={handleToggle} />
               ))}
             </List>
           </div>
-          {allPassed && (
-            isAlreadySubmitted ? (
+          {allPassed &&
+            (isAlreadySubmitted ? (
               <div className={styles.submittedSection}>
                 <Typography variant="body2" color="success.main">
                   回答済み
@@ -90,8 +83,7 @@ export const Results = ({ running, results, code, quId }: Props) => {
               </div>
             ) : (
               <SubmissionArea quId={quId} code={code} />
-            )
-          )}
+            ))}
         </>
       )}
     </div>

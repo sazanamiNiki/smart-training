@@ -1,15 +1,33 @@
 import type { Problem, ProblemMeta, TestCase } from '../types';
 
 const metaModules = import.meta.glob('/static/questions/qu*/meta.ts', { eager: true }) as Record<string, { meta: ProblemMeta }>;
-const testCaseModules = import.meta.glob('/static/questions/qu*/testCases.ts', { eager: true }) as Record<string, { testCases: TestCase[] }>;
-const readmeModules = import.meta.glob('/static/questions/qu*/README.md', { eager: true, query: '?raw', import: 'default' }) as Record<string, string>;
-const executeModules = import.meta.glob('/static/questions/qu*/execute.ts', { eager: true, query: '?raw', import: 'default' }) as Record<string, string>;
-const testCodeModules = import.meta.glob('/static/questions/qu*/execute.test.ts', { eager: true, query: '?raw', import: 'default' }) as Record<string, string>;
-const constantsModules = import.meta.glob('/static/questions/qu*/constants.ts', { eager: true, query: '?raw', import: 'default' }) as Record<string, string>;
+const testCaseModules = import.meta.glob('/static/questions/qu*/testCases.ts', {
+  eager: true,
+}) as Record<string, { testCases: TestCase[] }>;
+const readmeModules = import.meta.glob('/static/questions/qu*/README.md', {
+  eager: true,
+  query: '?raw',
+  import: 'default',
+}) as Record<string, string>;
+const executeModules = import.meta.glob('/static/questions/qu*/execute.ts', {
+  eager: true,
+  query: '?raw',
+  import: 'default',
+}) as Record<string, string>;
+const testCodeModules = import.meta.glob('/static/questions/qu*/execute.test.ts', {
+  eager: true,
+  query: '?raw',
+  import: 'default',
+}) as Record<string, string>;
+const constantsModules = import.meta.glob('/static/questions/qu*/constants.ts', {
+  eager: true,
+  query: '?raw',
+  import: 'default',
+}) as Record<string, string>;
 
 const problems: Problem[] = Object.keys(metaModules)
   .sort()
-  .map(metaPath => {
+  .map((metaPath) => {
     const dir = metaPath.replace('/meta.ts', '');
     const quId = dir.split('/').pop() ?? '';
     const { meta } = metaModules[metaPath];

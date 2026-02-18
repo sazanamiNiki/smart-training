@@ -1,19 +1,11 @@
+import { Button, CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle, TextField, Typography } from '@mui/material';
+
 import { useState } from 'react';
-import {
-  Button,
-  CircularProgress,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  TextField,
-  Typography,
-} from '@mui/material';
+
 import { useGitHubAuth } from '../../contexts/GitHubAuthContext';
 import styles from './InquiryDialog.module.css';
 
-const GAS_BASE_URL =
-  'https://script.google.com/macros/s/AKfycbxhWtyDaC3Gxw8ebudMaPTa52MbMCEzqGqhlWlIYDF8Q2hWfvhD-goQptfnz5ZBbW5l/exec';
+const GAS_BASE_URL = 'https://script.google.com/macros/s/AKfycbxhWtyDaC3Gxw8ebudMaPTa52MbMCEzqGqhlWlIYDF8Q2hWfvhD-goQptfnz5ZBbW5l/exec';
 
 type Props = {
   open: boolean;
@@ -68,7 +60,7 @@ export default function InquiryDialog({ open, onClose, mode }: Props) {
   return (
     <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm">
       <DialogTitle>{mode === 'contact' ? 'お問い合わせ' : '機能追加要望'}</DialogTitle>
-        <DialogContent className={styles.content}>
+      <DialogContent className={styles.content}>
         {sent ? (
           <Typography variant="body1" color="success.main">
             送信しました。ありがとうございます。
@@ -80,15 +72,7 @@ export default function InquiryDialog({ open, onClose, mode }: Props) {
                 送信者: {githubUser}
               </Typography>
             )}
-            <TextField
-              label="メッセージ"
-              multiline
-              rows={6}
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              disabled={sending}
-              fullWidth
-            />
+            <TextField label="メッセージ" multiline rows={6} value={message} onChange={(e) => setMessage(e.target.value)} disabled={sending} fullWidth />
             {error && (
               <Typography variant="body2" color="error">
                 {error}
@@ -97,7 +81,7 @@ export default function InquiryDialog({ open, onClose, mode }: Props) {
           </>
         )}
       </DialogContent>
-        <DialogActions className={styles.actions}>
+      <DialogActions className={styles.actions}>
         <Button variant="outlined" onClick={handleClose} disabled={sending}>
           {sent ? '閉じる' : 'キャンセル'}
         </Button>

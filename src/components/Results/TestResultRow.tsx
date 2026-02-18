@@ -1,6 +1,7 @@
-import { Typography, ListItemButton, Collapse, Divider } from '@mui/material';
 import ExpandLess from '@mui/icons-material/ExpandLess';
 import ExpandMore from '@mui/icons-material/ExpandMore';
+import { Collapse, Divider, ListItemButton, Typography } from '@mui/material';
+
 import type { TestResult } from '../../types';
 import styles from './TestResultRow.module.css';
 
@@ -12,9 +13,7 @@ type Props = {
 };
 
 function stringifyValue(obj: unknown): string {
-  return JSON.stringify(obj, (_, value) =>
-    value === undefined ? 'undefined' : value
-  );
+  return JSON.stringify(obj, (_, value) => (value === undefined ? 'undefined' : value));
 }
 
 /**
@@ -28,25 +27,14 @@ function stringifyValue(obj: unknown): string {
 export default function TestResultRow({ result, index, open, onToggle }: Props) {
   return (
     <div>
-      <ListItemButton
-        onClick={() => onToggle(index)}
-        className={styles.row}
-        data-testid={`test-result-row-${index}`}
-      >
-        <Typography
-          variant="body2"
-          className={result.passed ? styles.passLabel : styles.failLabel}
-        >
+      <ListItemButton onClick={() => onToggle(index)} className={styles.row} data-testid={`test-result-row-${index}`}>
+        <Typography variant="body2" className={result.passed ? styles.passLabel : styles.failLabel}>
           {result.passed ? 'PASS' : 'FAIL'}
         </Typography>
         <Typography variant="body2" className={styles.resultName}>
           #{index + 1} {result.name}
         </Typography>
-        {open ? (
-          <ExpandLess className={styles.expandIcon} />
-        ) : (
-          <ExpandMore className={styles.expandIcon} />
-        )}
+        {open ? <ExpandLess className={styles.expandIcon} /> : <ExpandMore className={styles.expandIcon} />}
       </ListItemButton>
 
       <Collapse in={open} timeout="auto" unmountOnExit>

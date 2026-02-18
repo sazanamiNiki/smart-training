@@ -16,10 +16,9 @@
   & > div {
     display: flex;
     align-items: center;
-    gap: 8px
+    gap: 8px;
   }
 }
-
 
 .title {
   font-weight: 600;
@@ -30,7 +29,7 @@
 }
 
 .testBtn {
-  color: #fff!important;
+  color: #fff !important;
 }
 
 .editorWrap {

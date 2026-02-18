@@ -1,14 +1,16 @@
-import { useState, useEffect, useRef } from 'react';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import Editor from '@monaco-editor/react';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { Tab, Tabs, Typography } from '@mui/material';
 import ReactMarkdown from 'react-markdown';
-import Editor from '@monaco-editor/react';
-import type { ResultsPanelProps } from './types';
+
+import { useEffect, useRef, useState } from 'react';
+
+import CommunityAnswers from '../CommunityAnswers/CommunityAnswers';
 import { MarkdownWrapper } from '../MarkdownWrapper/MarkdownWrapper';
 import { Results } from '../Results/Results';
-import CommunityAnswers from '../CommunityAnswers/CommunityAnswers';
 import styles from './ResultsPanel.module.css';
+import type { ResultsPanelProps } from './types';
 
 const DESCRIPTION_TAB = 0;
 const RESULT_TAB = 1;
@@ -33,11 +35,7 @@ export default function ResultsPanel({ problem, results, running, code }: Result
 
   return (
     <div className={styles.root}>
-      <Tabs
-        value={tab}
-        onChange={(_, v: number) => setTab(v)}
-        className={styles.tabs}
-      >
+      <Tabs value={tab} onChange={(_, v: number) => setTab(v)} className={styles.tabs}>
         <Tab label="問題説明" data-testid="tab-description" />
         <Tab label="テスト結果" data-testid="tab-results" />
         <Tab label="みんなの回答" data-testid="tab-community" />
@@ -48,21 +46,14 @@ export default function ResultsPanel({ problem, results, running, code }: Result
           <MarkdownWrapper>
             <ReactMarkdown>{problem.readme}</ReactMarkdown>
           </MarkdownWrapper>
-          
+
           {problem.constants && (
             <div className={constantsOpen ? styles.constantsSectionOpen : styles.constantsSection}>
-              <div
-                onClick={() => setConstantsOpen(!constantsOpen)}
-                className={styles.constantsToggle}
-              >
+              <div onClick={() => setConstantsOpen(!constantsOpen)} className={styles.constantsToggle}>
                 <Typography variant="caption" color="text.secondary">
                   定数
                 </Typography>
-                {constantsOpen ? (
-                  <ExpandLessIcon sx={{ fontSize: 16 }} />
-                ) : (
-                  <ExpandMoreIcon sx={{ fontSize: 16 }} />
-                )}
+                {constantsOpen ? <ExpandLessIcon sx={{ fontSize: 16 }} /> : <ExpandMoreIcon sx={{ fontSize: 16 }} />}
               </div>
               {constantsOpen && (
                 <div className={styles.constantsEditor}>
@@ -79,7 +70,7 @@ export default function ResultsPanel({ problem, results, running, code }: Result
                       scrollbar: { vertical: 'auto', horizontal: 'auto' },
                       padding: {
                         top: 8,
-                        bottom: 8
+                        bottom: 8,
                       },
                       wordWrap: 'off',
                       fontSize: 13,
@@ -94,13 +85,9 @@ export default function ResultsPanel({ problem, results, running, code }: Result
         </div>
       )}
 
-      {tab === RESULT_TAB && (
-        <Results running={running} results={results} code={code} quId={problem.quId} />
-      )}
+      {tab === RESULT_TAB && <Results running={running} results={results} code={code} quId={problem.quId} />}
 
-      {tab === COMMUNITY_TAB && (
-        <CommunityAnswers quId={problem.quId} />
-      )}
+      {tab === COMMUNITY_TAB && <CommunityAnswers quId={problem.quId} />}
     </div>
   );
 }

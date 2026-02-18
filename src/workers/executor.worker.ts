@@ -1,7 +1,7 @@
 import { transformTS } from '../services/esbuild.service';
-import type { WorkerRequest, WorkerResponse, TestResult } from '../types';
-import { VITEST_MOCK } from './mocks/vitest-mock';
+import type { TestResult, WorkerRequest, WorkerResponse } from '../types';
 import { CONSOLE_MOCK } from './mocks/console-mock';
+import { VITEST_MOCK } from './mocks/vitest-mock';
 
 // ---------------------------------------------------------------------------
 // Code transformation helpers
@@ -55,12 +55,7 @@ function runTest({ code, constants, testCode, testCases }: { code: string; const
 /** Execute user code (console output only, no tests). */
 function executeCode({ code, constants }: { code: string; constants?: string }) {
   const { userJsCode, constantsJsCode } = buildUserCode(code, constants);
-  const body = [
-    CONSOLE_MOCK,
-    constantsJsCode,
-    userJsCode,
-    'return __consoleLogs;',
-  ].join('\n');
+  const body = [CONSOLE_MOCK, constantsJsCode, userJsCode, 'return __consoleLogs;'].join('\n');
   return new Function(body)();
 }
 
@@ -83,7 +78,10 @@ self.onmessage = async (event) => {
 
     if (type !== 'run') return;
 
-    const { testCode, testCases } = event.data as WorkerRequest & { testCode: string; testCases: unknown[] };
+    const { testCode, testCases } = event.data as WorkerRequest & {
+      testCode: string;
+      testCases: unknown[];
+    };
     const resultObj = runTest({
       code: await transformTS(code),
       constants: constants ? await transformTS(constants) : undefined,

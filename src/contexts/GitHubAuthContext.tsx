@@ -1,5 +1,6 @@
-import { createContext, useContext, type ReactNode } from 'react';
-import { useGitHubSubmission, type UseGitHubSubmissionReturn } from '../hooks/useGitHubSubmission';
+import { type ReactNode, createContext, useContext } from 'react';
+
+import { type UseGitHubSubmissionReturn, useGitHubSubmission } from '../hooks/useGitHubSubmission';
 
 const GitHubAuthContext = createContext<UseGitHubSubmissionReturn | null>(null);
 

@@ -42,10 +42,7 @@ export async function fetchAnswerDetail(quId: string, answerId: string): Promise
   if (answerDetailCache[key]) return answerDetailCache[key];
   const codeUrl = `${baseUrl}/answers/${quId}/${answerId}/execute.ts`;
   const descUrl = `${baseUrl}/answers/${quId}/${answerId}/description.md`;
-  const [codeRes, descRes] = await Promise.all([
-    fetch(codeUrl),
-    fetch(descUrl)
-  ]);
+  const [codeRes, descRes] = await Promise.all([fetch(codeUrl), fetch(descUrl)]);
   if (!codeRes.ok) throw new Error('code.ts fetch failed');
   const code = await codeRes.text();
   let description: string | undefined = undefined;

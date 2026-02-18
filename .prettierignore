@@ -1,0 +1,10 @@
+node_modules/
+dist/
+build/
+static/
+public/
+*.min.js
+*.min.css
+package-lock.json
+playwright-report/
+test-results/

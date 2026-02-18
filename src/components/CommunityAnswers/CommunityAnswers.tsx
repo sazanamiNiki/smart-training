@@ -1,10 +1,12 @@
-import { useMemo, useState, useEffect } from 'react';
 import { FormControl, InputLabel, MenuItem, Select, Typography } from '@mui/material';
 import type { SelectChangeEvent } from '@mui/material';
-import { Answer, fetchAnswerMeta, fetchAnswerDetail } from '../../problems/answers';
+
+import { useEffect, useMemo, useState } from 'react';
+
+import { Answer, fetchAnswerDetail, fetchAnswerMeta } from '../../problems/answers';
 import AnswerItem from './AnswerItem';
-import type { CommunityAnswersProps } from './types';
 import styles from './CommunityAnswers.module.css';
+import type { CommunityAnswersProps } from './types';
 
 /**
  * Display community answers for a given question with a respondent selector.
@@ -19,12 +21,12 @@ export default function CommunityAnswers({ quId }: CommunityAnswersProps) {
     (async () => {
       const metaList = await fetchAnswerMeta();
       const filtered = metaList.filter((m: { quId: string }) => m.quId === quId);
-      const details = await Promise.all(
-        filtered.map((m: { quId: string; answerId: string }) => fetchAnswerDetail(m.quId, m.answerId))
-      );
+      const details = await Promise.all(filtered.map((m: { quId: string; answerId: string }) => fetchAnswerDetail(m.quId, m.answerId)));
       if (mounted) setAnswers(details);
     })();
-    return () => { mounted = false; };
+    return () => {
+      mounted = false;
+    };
   }, [quId]);
   const [selectedId, setSelectedId] = useState<string>('');
 
@@ -32,10 +34,7 @@ export default function CommunityAnswers({ quId }: CommunityAnswersProps) {
     setSelectedId(answers.length > 0 ? answers[0].answerId : '');
   }, [quId, answers]);
 
-  const selectedAnswer = useMemo(
-    () => answers.find((a: { answerId: string }) => a.answerId === selectedId) ?? null,
-    [answers, selectedId]
-  );
+  const selectedAnswer = useMemo(() => answers.find((a: { answerId: string }) => a.answerId === selectedId) ?? null, [answers, selectedId]);
 
   function handleChange(event: SelectChangeEvent) {
     setSelectedId(event.target.value);
@@ -55,12 +54,7 @@ export default function CommunityAnswers({ quId }: CommunityAnswersProps) {
     <div data-testid="community-answers" className={styles.root}>
       <FormControl size="small" fullWidth>
         <InputLabel id="answerer-select-label">回答者</InputLabel>
-        <Select
-          labelId="answerer-select-label"
-          value={selectedId}
-          label="回答者"
-          onChange={handleChange}
-        >
+        <Select labelId="answerer-select-label" value={selectedId} label="回答者" onChange={handleChange}>
           {answers.map((a: { answerId: string }) => (
             <MenuItem key={a.answerId} value={a.answerId}>
               {a.answerId}

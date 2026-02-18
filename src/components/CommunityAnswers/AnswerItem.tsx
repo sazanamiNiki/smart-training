@@ -1,12 +1,14 @@
-import { useState } from 'react';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import ExpandLessIcon from '@mui/icons-material/ExpandLess';
-import { Typography } from '@mui/material';
-import type { AnswerItemProps } from './types';
 import { Editor } from '@monaco-editor/react';
+import ExpandLessIcon from '@mui/icons-material/ExpandLess';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import { Typography } from '@mui/material';
 import ReactMarkdown from 'react-markdown';
+
+import { useState } from 'react';
+
 import { MarkdownWrapper } from '../MarkdownWrapper/MarkdownWrapper';
 import styles from './AnswerItem.module.css';
+import type { AnswerItemProps } from './types';
 
 /**
  * Render a single community answer entry.
@@ -18,15 +20,9 @@ export default function AnswerItem({ answer }: AnswerItemProps) {
   const hasDescription = Boolean(answer.description);
 
   return (
-    <div
-      data-testid="answer-item"
-      className={styles.root}
-    >
+    <div data-testid="answer-item" className={styles.root}>
       {hasDescription && (
-        <div
-          onClick={() => setOpen(!open)}
-          className={styles.descriptionToggle}
-        >
+        <div onClick={() => setOpen(!open)} className={styles.descriptionToggle}>
           <Typography variant="caption" color="text.secondary">
             解説
           </Typography>
@@ -58,7 +54,7 @@ export default function AnswerItem({ answer }: AnswerItemProps) {
               contextmenu: false,
               padding: {
                 top: 8,
-                bottom: 8
+                bottom: 8,
               },
             }}
           />

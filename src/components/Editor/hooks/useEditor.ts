@@ -1,6 +1,7 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
-import type { Problem, TestResult, WorkerResponse, ConsoleEntry } from '../../../types';
-import { saveProblemCode, loadProblemCode } from '../../../services/storage.service';
+import { useCallback, useEffect, useRef, useState } from 'react';
+
+import { loadProblemCode, saveProblemCode } from '../../../services/storage.service';
+import type { ConsoleEntry, Problem, TestResult, WorkerResponse } from '../../../types';
 import { useWorker } from './useWorker';
 
 export interface UseEditorReturn {
@@ -21,9 +22,7 @@ export interface UseEditorReturn {
  * Worker communication is delegated to `useWorker`.
  */
 export function useEditor(problem: Problem): UseEditorReturn {
-  const [code, setCodeState] = useState<string>(
-    () => loadProblemCode(problem.id) ?? problem.initialCode,
-  );
+  const [code, setCodeState] = useState<string>(() => loadProblemCode(problem.id) ?? problem.initialCode);
   const [results, setResults] = useState<TestResult[]>([]);
   const [running, setRunning] = useState(false);
   const [consoleLogs, setConsoleLogs] = useState<ConsoleEntry[]>([]);
@@ -69,7 +68,14 @@ export function useEditor(problem: Problem): UseEditorReturn {
           setResults(data.results);
         } else if (data.type === 'error') {
           setResults([
-            { input: [], name: '', expected: undefined, actual: undefined, passed: false, error: data.message },
+            {
+              input: [],
+              name: '',
+              expected: undefined,
+              actual: undefined,
+              passed: false,
+              error: data.message,
+            },
           ]);
         }
       },
@@ -81,18 +87,25 @@ export function useEditor(problem: Problem): UseEditorReturn {
     if (running || executing) return;
     setExecuting(true);
     setConsoleLogs([]);
-    postMessage(
-      { type: 'execute', code, constants: problem.constants },
-      (data: WorkerResponse) => {
-        setExecuting(false);
-        if (data.type === 'console-result') {
-          setConsoleLogs(data.logs);
-        }
-      },
-    );
+    postMessage({ type: 'execute', code, constants: problem.constants }, (data: WorkerResponse) => {
+      setExecuting(false);
+      if (data.type === 'console-result') {
+        setConsoleLogs(data.logs);
+      }
+    });
   }, [running, executing, code, problem.constants, postMessage]);
 
   const clearConsoleLogs = useCallback(() => setConsoleLogs([]), []);
 
-  return { code, setCode, results, running, run, consoleLogs, executing, execute, clearConsoleLogs };
+  return {
+    code,
+    setCode,
+    results,
+    running,
+    run,
+    consoleLogs,
+    executing,
+    execute,
+    clearConsoleLogs,
+  };
 }

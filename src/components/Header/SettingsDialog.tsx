@@ -1,17 +1,7 @@
-import {
-  Dialog,
-  DialogContent,
-  DialogTitle,
-  FormControl,
-  FormControlLabel,
-  InputLabel,
-  MenuItem,
-  Select,
-  Switch,
-  Typography,
-} from '@mui/material';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
 import LightModeIcon from '@mui/icons-material/LightMode';
+import { Dialog, DialogContent, DialogTitle, FormControl, FormControlLabel, InputLabel, MenuItem, Select, Switch, Typography } from '@mui/material';
+
 import styles from './SettingsDialog.module.css';
 
 const FONT_SIZE_OPTIONS = [12, 13, 14, 15, 16, 18, 20];
@@ -55,17 +45,14 @@ export default function SettingsDialog({
       <DialogContent>
         <div className={styles.betaNotice}>
           <Typography variant="caption" fontWeight={'700'}>
-              <span>ベータ版: 設定はこのブラウザのみに保存されます。</span><br />
+            <span>ベータ版: 設定はこのブラウザのみに保存されます。</span>
+            <br />
           </Typography>
         </div>
         <div className={styles.colorModeRow}>
           <FormControl size="small" fullWidth>
             <InputLabel>カラーモード</InputLabel>
-            <Select
-              value={colorMode}
-              label="カラーモード"
-              onChange={(e) => onColorModeChange(e.target.value as 'dark' | 'light')}
-            >
+            <Select value={colorMode} label="カラーモード" onChange={(e) => onColorModeChange(e.target.value as 'dark' | 'light')}>
               <MenuItem value="dark">
                 <div className={styles.menuItemRow}>
                   <DarkModeIcon fontSize="small" />
@@ -81,23 +68,11 @@ export default function SettingsDialog({
             </Select>
           </FormControl>
         </div>
-        <FormControlLabel
-          control={
-            <Switch
-              checked={layoutFlipped}
-              onChange={(e) => onLayoutFlip(e.target.checked)}
-            />
-          }
-          label="エディタを右側に表示"
-        />
+        <FormControlLabel control={<Switch checked={layoutFlipped} onChange={(e) => onLayoutFlip(e.target.checked)} />} label="エディタを右側に表示" />
         <div className={styles.fontSizeRow}>
           <FormControl size="small" fullWidth>
             <InputLabel>エディタフォントサイズ</InputLabel>
-            <Select
-              value={editorFontSize}
-              label="エディタフォントサイズ"
-              onChange={(e) => onEditorFontSizeChange(e.target.value as number)}
-            >
+            <Select value={editorFontSize} label="エディタフォントサイズ" onChange={(e) => onEditorFontSizeChange(e.target.value as number)}>
               {FONT_SIZE_OPTIONS.map((size) => (
                 <MenuItem key={size} value={size}>
                   {size}px{size === 14 ? ' (デフォルト)' : ''}

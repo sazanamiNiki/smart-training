@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useCallback, useState } from 'react';
 
 /**
  * A `useState`-like hook that automatically persists state changes to localStorage.
@@ -12,10 +12,7 @@ import { useState, useCallback } from 'react';
  * const [fontSize, setFontSize] = usePersistedState(loadEditorFontSize, saveEditorFontSize);
  * ```
  */
-export function usePersistedState<T>(
-  loadFn: () => T,
-  saveFn: (value: T) => void,
-): [T, (value: T) => void] {
+export function usePersistedState<T>(loadFn: () => T, saveFn: (value: T) => void): [T, (value: T) => void] {
   const [value, setValueState] = useState<T>(loadFn);
 
   const setValue = useCallback(
