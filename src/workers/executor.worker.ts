@@ -4,6 +4,24 @@ import { CONSOLE_MOCK } from './mocks/console-mock';
 import { VITEST_MOCK } from './mocks/vitest-mock';
 
 // ---------------------------------------------------------------------------
+// Sandbox hardening: disable dangerous global APIs to prevent data exfiltration
+// Note: fetch is disabled lazily (after esbuild-wasm init) via lockdownSandbox()
+// ---------------------------------------------------------------------------
+let sandboxLocked = false;
+
+function lockdownSandbox() {
+  if (sandboxLocked) return;
+  sandboxLocked = true;
+  const g = self as unknown as Record<string, unknown>;
+  g.fetch = undefined;
+  g.XMLHttpRequest = undefined;
+  g.WebSocket = undefined;
+  g.EventSource = undefined;
+  g.indexedDB = undefined;
+  g.caches = undefined;
+}
+
+// ---------------------------------------------------------------------------
 // Code transformation helpers
 // ---------------------------------------------------------------------------
 
@@ -68,10 +86,9 @@ self.onmessage = async (event) => {
     const { type, code, constants } = event.data as WorkerRequest;
 
     if (type === 'execute') {
-      const logs = executeCode({
-        code: await transformTS(code),
-        constants: constants ? await transformTS(constants) : undefined,
-      });
+      const [transpiledCode, transpiledConstants] = await Promise.all([transformTS(code), constants ? transformTS(constants) : Promise.resolve(undefined)]);
+      lockdownSandbox();
+      const logs = executeCode({ code: transpiledCode, constants: transpiledConstants });
       self.postMessage({ type: 'console-result', logs } as WorkerResponse);
       return;
     }
@@ -82,12 +99,19 @@ self.onmessage = async (event) => {
       testCode: string;
       testCases: unknown[];
     };
+    const [transpiledCode, transpiledConstants, transpiledTestCode] = await Promise.all([
+      transformTS(code),
+      constants ? transformTS(constants) : Promise.resolve(undefined),
+      transformTS(testCode),
+    ]);
+    lockdownSandbox();
     const resultObj = runTest({
-      code: await transformTS(code),
-      constants: constants ? await transformTS(constants) : undefined,
-      testCode: await transformTS(testCode),
+      code: transpiledCode,
+      constants: transpiledConstants,
+      testCode: transpiledTestCode,
       testCases,
     });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const results: TestResult[] = resultObj.results.map((r: any) => ({
       name: r.name,
       input: r.input ?? [],

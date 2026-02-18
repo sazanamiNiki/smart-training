@@ -6,6 +6,7 @@ import { useGitHubAuth } from '../../contexts/GitHubAuthContext';
 import styles from './InquiryDialog.module.css';
 
 const GAS_BASE_URL = 'https://script.google.com/macros/s/AKfycbxhWtyDaC3Gxw8ebudMaPTa52MbMCEzqGqhlWlIYDF8Q2hWfvhD-goQptfnz5ZBbW5l/exec';
+const MAX_MESSAGE_LENGTH = 2000;
 
 type Props = {
   open: boolean;
@@ -72,7 +73,18 @@ export default function InquiryDialog({ open, onClose, mode }: Props) {
                 送信者: {githubUser}
               </Typography>
             )}
-            <TextField label="メッセージ" multiline rows={6} value={message} onChange={(e) => setMessage(e.target.value)} disabled={sending} fullWidth />
+            <TextField
+              label="メッセージ"
+              multiline
+              rows={6}
+              value={message}
+              onChange={(e) => setMessage(e.target.value.slice(0, MAX_MESSAGE_LENGTH))}
+              disabled={sending}
+              fullWidth
+              helperText={`${message.length} / ${MAX_MESSAGE_LENGTH}`}
+              error={message.length >= MAX_MESSAGE_LENGTH}
+              inputProps={{ maxLength: MAX_MESSAGE_LENGTH }}
+            />
             {error && (
               <Typography variant="body2" color="error">
                 {error}
@@ -89,7 +101,7 @@ export default function InquiryDialog({ open, onClose, mode }: Props) {
           <Button
             variant="contained"
             onClick={handleSend}
-            disabled={sending || !message.trim()}
+            disabled={sending || !message.trim() || message.length > MAX_MESSAGE_LENGTH}
             startIcon={sending ? <CircularProgress size={14} color="inherit" /> : undefined}
           >
             送信
