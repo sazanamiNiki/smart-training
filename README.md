@@ -28,9 +28,11 @@ npm run dev
 | `npm run dev` | 開発サーバー起動 |
 | `npm run build` | 型チェック + Vite本番ビルド |
 | `npm run preview` | ビルド結果プレビュー |
+| `npm run lint` | ESLint |
+| `npm run format` | Prettier で自動フォーマット |
+| `npm run format:check` | Prettier フォーマットチェック |
 | `npm run test:e2e` | Playwright E2Eテスト |
 | `npm run test:e2e:headed` | E2Eテスト（ブラウザ表示付き） |
-| `npm run lint` | ESLint |
 
 ## 技術スタック
 
@@ -42,6 +44,7 @@ npm run dev
 - **バックエンド**: Cloudflare Worker（OAuth プロキシ + 提出処理）
 - **Markdown**: react-markdown
 - **テスト**: Vitest（問題検証） / Playwright（E2E）
+- **コード品質**: Prettier + ESLint + husky + lint-staged（プレコミットフック）
 - **デプロイ**: GitHub Pages（GitHub Actions）
 
 ## 問題の追加手順
@@ -182,3 +185,27 @@ POST /submit (Cloudflare Worker)
 ```sh
 npm run build
 ```
+
+## コード品質
+
+### Prettier
+
+コードフォーマッターとして Prettier を導入済み。`@trivago/prettier-plugin-sort-imports` による import 自動ソートも有効。
+
+```sh
+npm run format         # 自動フォーマット
+npm run format:check   # フォーマットチェック（CI向け）
+```
+
+### プレコミットフック
+
+husky + lint-staged により、`git commit` 時にステージングされたファイルに対して自動チェックが実行される。
+
+| 対象ファイル | チェック内容 |
+|---|---|
+| `src/**/*.{ts,tsx}` | Prettier + ESLint |
+| `e2e/**/*.{ts,tsx}` | Prettier + ESLint |
+| `src/**/*.{css,json}` | Prettier |
+| `*.{ts,mjs,json}` (ルート) | Prettier |
+
+チェックに失敗するとコミットがブロックされる。事前に `npm run format` で整形してからコミットすること。
