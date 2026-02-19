@@ -7,6 +7,12 @@ const CORS_HEADERS = {
   'Access-Control-Allow-Headers': 'Content-Type, Accept, Authorization',
 };
 
+const SECURITY_HEADERS = {
+  'X-Content-Type-Options': 'nosniff',
+  'X-Frame-Options': 'DENY',
+  'Referrer-Policy': 'strict-origin-when-cross-origin',
+};
+
 const PROXY_PATHS = [
   '/login/device/code',
   '/login/oauth/access_token',
@@ -179,6 +185,15 @@ async function handleSubmit(request, env) {
     });
   }
 
+  // --- Input validation ---
+  const contentLength = parseInt(request.headers.get('Content-Length') || '0', 10);
+  const MAX_BODY_SIZE = 100 * 1024; // 100KB
+  if (contentLength > MAX_BODY_SIZE) {
+    return new Response(JSON.stringify({ error: 'リクエストサイズが上限を超えています。' }), {
+      status: 413, headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
+    });
+  }
+
   let body;
   try {
     body = await request.json();
@@ -188,6 +203,25 @@ async function handleSubmit(request, env) {
     });
   }
   const { quId, code, description } = body;
+
+  // Validate quId format to prevent path traversal
+  if (!quId || typeof quId !== 'string' || !/^qu\d+$/.test(quId)) {
+    return new Response(JSON.stringify({ error: 'quId の形式が不正です。' }), {
+      status: 400, headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
+    });
+  }
+
+  // Validate code and description
+  if (!code || typeof code !== 'string' || code.length > MAX_BODY_SIZE) {
+    return new Response(JSON.stringify({ error: 'code が不正です。' }), {
+      status: 400, headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
+    });
+  }
+  if (typeof description !== 'string' || description.length > MAX_BODY_SIZE) {
+    return new Response(JSON.stringify({ error: 'description が不正です。' }), {
+      status: 400, headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
+    });
+  }
 
   let appJwt;
   try {
@@ -241,7 +275,7 @@ async function handleSubmit(request, env) {
   }
 
   return new Response(JSON.stringify({ success: true }), {
-    status: 200, headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
+    status: 200, headers: { 'Content-Type': 'application/json', ...CORS_HEADERS, ...SECURITY_HEADERS },
   });
 }
 

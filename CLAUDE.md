@@ -25,29 +25,37 @@
 smart-training/
 ├── src/
 │   ├── App.tsx                    # ルートコンポーネント
+│   ├── App.module.css             # App レイアウトスタイル
 │   ├── main.tsx                   # エントリポイント
-│   ├── theme.ts                   # MUIテーマ（dark/light）
+│   ├── theme.ts                   # MUIテーマ + applyCssVariables()
+│   ├── theme.css                  # CSS Custom Properties デフォルト値
 │   ├── types/index.ts             # 共通型定義
 │   ├── contexts/
 │   │   └── GitHubAuthContext.tsx   # GitHub認証コンテキスト
 │   ├── hooks/
-│   │   └── useGitHubSubmission.ts # Device Flow認証 + 提出ロジック
+│   │   ├── useGitHubSubmission.ts # Device Flow認証 + 提出ロジック
+│   │   └── usePersistedState.ts  # localStorage自動永続化フック
 │   ├── services/
 │   │   ├── esbuild.service.ts     # esbuild-wasm初期化・TSトランスパイル
-│   │   └── storage.service.ts     # localStorage CRUD
+│   │   └── storage.service.ts     # localStorage CRUD（ジェネリックヘルパー）
 │   ├── workers/
-│   │   └── executor.worker.ts     # Web Worker: コンパイル→実行→結果返却
+│   │   ├── executor.worker.ts     # Web Worker: コンパイル→実行→結果返却
+│   │   └── mocks/
+│   │       ├── vitest-mock.ts     # Vitest互換テストランタイムモック
+│   │       └── console-mock.ts    # console.logキャプチャモック
 │   ├── problems/
 │   │   ├── index.ts               # import.meta.glob で問題を自動収集
 │   │   └── answers.ts             # コミュニティ回答のfetch+キャッシュ
 │   └── components/
 │       ├── INDEX.md               # コンポーネント目次
-│       ├── Header/                # ヘッダー・問題選択・設定・問い合わせ
-│       ├── Editor/                # Monacoエディタ・コンソール・useEditor
-│       ├── Results/               # テスト結果一覧・提出エリア
-│       ├── ResultsPanel/          # 3タブパネル（問題説明/結果/回答）
-│       ├── CommunityAnswers/      # みんなの回答表示
-│       ├── MarkdownWrapper/       # Markdownスタイルラッパー
+│       ├── Header/                # ヘッダー・設定・問い合わせ（*.module.css）
+│       ├── Editor/                # Monacoエディタ・コンソール（*.module.css）
+│       │   └── hooks/useWorker.ts  # Worker通信管理フック
+│       ├── Results/               # テスト結果一覧・提出（*.module.css）
+│       │   └── TestResultRow.tsx   # テスト行コンポーネント（分離済み）
+│       ├── ResultsPanel/          # 3タブパネル（*.module.css）
+│       ├── CommunityAnswers/      # みんなの回答表示（*.module.css）
+│       ├── MarkdownWrapper/       # Markdownスタイル（*.module.css）
 │       ├── Common/                # （予備）
 │       └── Review/                # （予備）
 ├── static/questions/              # 問題定義（qu1〜qu9）
@@ -134,6 +142,69 @@ feature/* → develop → main
 - `main` → GitHub Pages ルート (`/{repo}/`)
 - `develop` → GitHub Pages `/dev/` サブパス
 - `add-answers` → `answers/` ディレクトリのみデプロイ（回答データ用）
+
+## スタイリング規約
+
+### 基本方針
+
+スタイルは **CSS Modules**（`*.module.css`）で管理する。MUI の `sx` prop や `styled()` は使用禁止。
+
+### ファイル配置
+
+各コンポーネントと同じディレクトリに `{ComponentName}.module.css` を配置する。
+
+```
+Components/
+  Header/
+    HeaderBar.tsx           ← ロジック + JSX（className 参照のみ）
+    HeaderBar.module.css    ← スタイルのみ
+```
+
+### CSS 変数（テーマトークン）
+
+スタイル値はすべて `src/theme.css` で定義された CSS Custom Properties を使用する。
+
+| 変数 | 用途 |
+|------|------|
+| `--bg-default` | ページ背景色 |
+| `--bg-paper` | カード/パネル背景色 |
+| `--text-primary` | 主テキスト色 |
+| `--text-secondary` | 副テキスト色 |
+| `--text-disabled` | 無効テキスト色 |
+| `--color-primary` | プライマリカラー |
+| `--color-success` | 成功色 |
+| `--color-error` | エラー色 |
+| `--color-warning` | 警告色 |
+| `--color-divider` | 罫線・区切り色 |
+| `--color-border` | ボーダー色 |
+| `--action-hover` | ホバー背景色 |
+| `--font-sans` | 通常フォント |
+| `--font-mono` | 等幅フォント |
+| `--code-bg` | インラインコード背景 |
+| `--pre-bg` | コードブロック背景 |
+| `--table-stripe-bg` | テーブルゼブラ背景 |
+
+ダークモード/ライトモード切替時、`applyCssVariables()` が `:root` のCSS変数を動的に書き換える。
+
+### 禁止事項
+
+- ❌ MUI `sx` prop の使用
+- ❌ MUI `styled()` によるスタイル定義
+- ❌ JSX 内でのインラインスタイル（`style={}`）— 動的な値（`height` 等）のみ例外
+- ❌ CSS 変数を経由せずに色・フォントをハードコードすること
+- ❌ コンポーネント TSX ファイル内にスタイル定義を書くこと
+
+### MUI コンポーネントとの使い分け
+
+| HTML 要素で代替可能 | MUI のまま使用 |
+|---|---|
+| `Box` → `<div>` + className | `Button`, `Typography`, `Dialog` |
+| `Box component="span"` → `<span>` | `Select`, `TextField`, `Tab/Tabs` |
+| | `List`, `ListItemButton`, `Collapse` |
+| | `CircularProgress`, `Divider` |
+
+レイアウト用の `Box` は `<div>` に置き換え、CSS Modules でスタイルを当てる。
+MUI のインタラクティブコンポーネント（Button, Dialog, Select 等）はそのまま使用し、`color` 等の MUI prop は引き続き利用可。
 
 ## 規約
 

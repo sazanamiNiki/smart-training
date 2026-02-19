@@ -1,16 +1,11 @@
-import { useState } from 'react';
-import {
-  Box,
-  FormControl,
-  IconButton,
-  Menu,
-  MenuItem,
-  Select,
-  Typography,
-} from '@mui/material';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
-import type { Problem } from '../../types';
+import { FormControl, IconButton, Menu, MenuItem, Select, Typography } from '@mui/material';
+
+import { useState } from 'react';
+
 import { useGitHubAuth } from '../../contexts/GitHubAuthContext';
+import type { Problem } from '../../types';
+import styles from './HeaderBar.module.css';
 import InquiryDialog from './InquiryDialog';
 import SettingsDialog from './SettingsDialog';
 
@@ -78,25 +73,10 @@ export default function HeaderBar({
 
   return (
     <>
-      <Box
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 2,
-          px: 2,
-          py: 1,
-          bgcolor: 'background.paper',
-          borderBottom: '1px solid',
-          borderColor: 'divider',
-          flexShrink: 0,
-        }}
-      >
+      <div className={styles.header}>
         <Typography variant="h2">Smart Training</Typography>
-        <FormControl size="small" sx={{ minWidth: 200 }}>
-          <Select
-            value={selectedId}
-            onChange={(e) => onProblemChange(e.target.value)}
-          >
+        <FormControl size="small" className={styles.selector}>
+          <Select value={selectedId} onChange={(e) => onProblemChange(e.target.value)}>
             {problems.map((p) => (
               <MenuItem key={p.id} value={p.id}>
                 {p.quId} - {p.title}
@@ -104,7 +84,7 @@ export default function HeaderBar({
             ))}
           </Select>
         </FormControl>
-        <Box sx={{ ml: 'auto', display: 'flex', alignItems: 'center', gap: 1 }}>
+        <div className={styles.actions}>
           {githubUser && (
             <Typography variant="body2" color="text.secondary">
               {githubUser}
@@ -113,7 +93,7 @@ export default function HeaderBar({
           <IconButton size="small" onClick={openMenu} aria-label="メニューを開く">
             <MoreVertIcon fontSize="small" />
           </IconButton>
-        </Box>
+        </div>
 
         <Menu
           anchorEl={menuAnchor}
@@ -126,7 +106,7 @@ export default function HeaderBar({
           <MenuItem onClick={handleInquiry}>問い合わせ</MenuItem>
           <MenuItem onClick={handleFeatureRequest}>機能追加要望</MenuItem>
         </Menu>
-      </Box>
+      </div>
 
       <InquiryDialog open={inquiryOpen} onClose={() => setInquiryOpen(false)} mode={inquiryMode} />
       <SettingsDialog

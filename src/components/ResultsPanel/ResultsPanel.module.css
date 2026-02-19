@@ -1,0 +1,53 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 0 0 32px 16px;
+  margin-right: 4px;
+}
+
+.tabs {
+  border-bottom: 1px solid var(--color-divider);
+  flex-shrink: 0;
+}
+
+.descriptionWrap {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow: hidden;
+  margin: 4px;
+}
+
+.constantsSection {
+  border-top: 1px solid var(--color-divider);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+
+.constantsSectionOpen {
+  border-top: 1px solid var(--color-divider);
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+.constantsToggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 16px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.constantsToggle:hover {
+  background-color: var(--action-hover);
+}
+
+.constantsEditor {
+  flex: 1;
+  min-height: 0;
+}

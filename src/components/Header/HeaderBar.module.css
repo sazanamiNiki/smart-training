@@ -1,0 +1,20 @@
+.header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 8px 16px;
+  background-color: var(--bg-paper);
+  border-bottom: 1px solid var(--color-divider);
+  flex-shrink: 0;
+}
+
+.selector {
+  min-width: 200px;
+}
+
+.actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}

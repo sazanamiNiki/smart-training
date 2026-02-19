@@ -1,17 +1,12 @@
-import { Box, Button, Typography } from '@mui/material';
-import type { ConsoleEntry, ConsoleLogType } from '../../types';
+import { Button, Typography } from '@mui/material';
+
+import type { ConsoleEntry } from '../../types';
+import styles from './ConsolePanel.module.css';
 
 export interface ConsolePanelProps {
   logs: ConsoleEntry[];
   onClear: () => void;
 }
-
-const LOG_COLOR: Record<ConsoleLogType, string> = {
-  log: 'text.primary',
-  info: 'primary.main',
-  warn: 'warning.main',
-  error: 'error.main',
-};
 
 /**
  * Display console output captured during code execution.
@@ -21,71 +16,28 @@ const LOG_COLOR: Record<ConsoleLogType, string> = {
  */
 export function ConsolePanel({ logs, onClear }: ConsolePanelProps) {
   return (
-    <Box
-      sx={{
-        height: 160,
-        display: 'flex',
-        flexDirection: 'column',
-        borderTop: '1px solid',
-        borderColor: 'divider',
-        flexShrink: 0,
-      }}
-    >
-      <Box
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          px: 2,
-          py: 0.5,
-          borderBottom: '1px solid',
-          borderColor: 'divider',
-          flexShrink: 0,
-          bgcolor: 'background.paper',
-        }}
-      >
-        <Typography variant="caption" sx={{ color: 'text.secondary', mr: 'auto' }}>
+    <div className={styles.root}>
+      <div className={styles.header}>
+        <Typography variant="caption" className={styles.headerLabel}>
           Console
         </Typography>
-        <Button size="small" onClick={onClear} sx={{ minWidth: 0, px: 1, fontSize: 12 }} data-testid="console-clear">
+        <Button size="small" onClick={onClear} className={styles.clearBtn} data-testid="console-clear">
           Clear
         </Button>
-      </Box>
-      <Box
-        data-testid="console-output"
-        sx={{
-          flex: 1,
-          overflow: 'auto',
-          px: 2,
-          py: 1,
-          bgcolor: 'action.hover',
-        }}
-      >
+      </div>
+      <div data-testid="console-output" className={styles.output}>
         {logs.length === 0 ? (
-          <Typography
-            variant="caption"
-            sx={{ color: 'text.disabled', fontFamily: 'monospace' }}
-          >
+          <Typography variant="caption" className={styles.noOutput}>
             No output
           </Typography>
         ) : (
           logs.map((entry, i) => (
-            <Typography
-              key={i}
-              variant="caption"
-              component="div"
-              sx={{
-                color: LOG_COLOR[entry.type],
-                fontFamily: 'monospace',
-                whiteSpace: 'pre-wrap',
-                wordBreak: 'break-all',
-                lineHeight: 1.6,
-              }}
-            >
+            <Typography key={i} variant="caption" component="div" className={styles.logEntry} data-type={entry.type}>
               {entry.args}
             </Typography>
           ))
         )}
-      </Box>
-    </Box>
+      </div>
+    </div>
   );
 }

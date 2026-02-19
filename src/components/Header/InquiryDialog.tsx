@@ -1,18 +1,12 @@
-import { useState } from 'react';
-import {
-  Button,
-  CircularProgress,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  TextField,
-  Typography,
-} from '@mui/material';
-import { useGitHubAuth } from '../../contexts/GitHubAuthContext';
+import { Button, CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle, TextField, Typography } from '@mui/material';
 
-const GAS_BASE_URL =
-  'https://script.google.com/macros/s/AKfycbxhWtyDaC3Gxw8ebudMaPTa52MbMCEzqGqhlWlIYDF8Q2hWfvhD-goQptfnz5ZBbW5l/exec';
+import { useState } from 'react';
+
+import { useGitHubAuth } from '../../contexts/GitHubAuthContext';
+import styles from './InquiryDialog.module.css';
+
+const GAS_BASE_URL = 'https://script.google.com/macros/s/AKfycbxhWtyDaC3Gxw8ebudMaPTa52MbMCEzqGqhlWlIYDF8Q2hWfvhD-goQptfnz5ZBbW5l/exec';
+const MAX_MESSAGE_LENGTH = 2000;
 
 type Props = {
   open: boolean;
@@ -67,7 +61,7 @@ export default function InquiryDialog({ open, onClose, mode }: Props) {
   return (
     <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm">
       <DialogTitle>{mode === 'contact' ? 'お問い合わせ' : '機能追加要望'}</DialogTitle>
-      <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 2 }}>
+      <DialogContent className={styles.content}>
         {sent ? (
           <Typography variant="body1" color="success.main">
             送信しました。ありがとうございます。
@@ -84,9 +78,12 @@ export default function InquiryDialog({ open, onClose, mode }: Props) {
               multiline
               rows={6}
               value={message}
-              onChange={(e) => setMessage(e.target.value)}
+              onChange={(e) => setMessage(e.target.value.slice(0, MAX_MESSAGE_LENGTH))}
               disabled={sending}
               fullWidth
+              helperText={`${message.length} / ${MAX_MESSAGE_LENGTH}`}
+              error={message.length >= MAX_MESSAGE_LENGTH}
+              inputProps={{ maxLength: MAX_MESSAGE_LENGTH }}
             />
             {error && (
               <Typography variant="body2" color="error">
@@ -96,7 +93,7 @@ export default function InquiryDialog({ open, onClose, mode }: Props) {
           </>
         )}
       </DialogContent>
-      <DialogActions sx={{ px: 3, pb: 2 }}>
+      <DialogActions className={styles.actions}>
         <Button variant="outlined" onClick={handleClose} disabled={sending}>
           {sent ? '閉じる' : 'キャンセル'}
         </Button>
@@ -104,7 +101,7 @@ export default function InquiryDialog({ open, onClose, mode }: Props) {
           <Button
             variant="contained"
             onClick={handleSend}
-            disabled={sending || !message.trim()}
+            disabled={sending || !message.trim() || message.length > MAX_MESSAGE_LENGTH}
             startIcon={sending ? <CircularProgress size={14} color="inherit" /> : undefined}
           >
             送信

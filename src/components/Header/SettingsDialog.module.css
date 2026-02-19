@@ -1,0 +1,17 @@
+.betaNotice {
+  margin-bottom: 16px;
+}
+
+.colorModeRow {
+  margin-bottom: 8px;
+}
+
+.menuItemRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.fontSizeRow {
+  margin-top: 16px;
+}

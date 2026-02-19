@@ -1,4 +1,4 @@
-import type { Problem, ConsoleEntry } from '../../types';
+import type { ConsoleEntry, Problem } from '../../types';
 
 export interface EditorPanelProps {
   problem: Problem;

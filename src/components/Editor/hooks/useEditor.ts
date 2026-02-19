@@ -1,6 +1,8 @@
-import { useState, useEffect, useRef } from 'react';
-import type { Problem, TestResult, WorkerRequest, WorkerResponse, ConsoleEntry, ExecuteMessage } from '../../../types';
-import { saveProblemCode, loadProblemCode } from '../../../services/storage.service';
+import { useCallback, useEffect, useRef, useState } from 'react';
+
+import { loadProblemCode, saveProblemCode } from '../../../services/storage.service';
+import type { ConsoleEntry, Problem, TestResult, WorkerResponse } from '../../../types';
+import { useWorker } from './useWorker';
 
 export interface UseEditorReturn {
   code: string;
@@ -14,26 +16,19 @@ export interface UseEditorReturn {
   clearConsoleLogs: () => void;
 }
 
+/**
+ * Manage code editing state, debounced persistence, and test / console execution.
+ *
+ * Worker communication is delegated to `useWorker`.
+ */
 export function useEditor(problem: Problem): UseEditorReturn {
-  const [code, setCodeState] = useState<string>(
-    () => loadProblemCode(problem.id) ?? problem.initialCode
-  );
+  const [code, setCodeState] = useState<string>(() => loadProblemCode(problem.id) ?? problem.initialCode);
   const [results, setResults] = useState<TestResult[]>([]);
   const [running, setRunning] = useState(false);
   const [consoleLogs, setConsoleLogs] = useState<ConsoleEntry[]>([]);
   const [executing, setExecuting] = useState(false);
-  const workerRef = useRef<Worker | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(() => {
-    workerRef.current = new Worker(
-      new URL('../../../workers/executor.worker.ts', import.meta.url),
-      { type: 'module' }
-    );
-    return () => {
-      workerRef.current?.terminate();
-    };
-  }, []);
+  const { postMessage } = useWorker();
 
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
@@ -42,66 +37,75 @@ export function useEditor(problem: Problem): UseEditorReturn {
     setResults([]);
   }, [problem.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const setCode = (newCode: string) => {
-    setCodeState(newCode);
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => {
-      saveProblemCode(problem.id, newCode);
-    }, 300);
-  };
+  /** Update in-memory code and debounce-persist to localStorage. */
+  const setCode = useCallback(
+    (newCode: string) => {
+      setCodeState(newCode);
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+      debounceRef.current = setTimeout(() => {
+        saveProblemCode(problem.id, newCode);
+      }, 300);
+    },
+    [problem.id],
+  );
 
-  const run = () => {
-    if (!workerRef.current || running) return;
+  /** Run test cases against the current code via the worker. */
+  const run = useCallback(() => {
+    if (running) return;
     setRunning(true);
-    const worker = workerRef.current;
-    worker.onmessage = (event) => {
-      worker.onmessage = null;
-      setRunning(false);
-      const data = event.data as WorkerResponse;
-      if (data.type === 'result') {
-        setResults(data.results);
-      } else if (data.type === 'error') {
-        setResults([
-          {
-            input: [],
-            name: '',
-            expected: undefined,
-            actual: undefined,
-            passed: false,
-            error: data.message,
-          },
-        ]);
-      }
-    };
-    const message: WorkerRequest = {
-      type: 'run',
-      code,
-      testCode: problem.testCode,
-      testCases: problem.testCases,
-      functionName: problem.functionName,
-      constants: problem.constants,
-    };
-    worker.postMessage(message);
-  };
+    postMessage(
+      {
+        type: 'run',
+        code,
+        testCode: problem.testCode,
+        testCases: problem.testCases,
+        functionName: problem.functionName,
+        constants: problem.constants,
+      },
+      (data: WorkerResponse) => {
+        setRunning(false);
+        if (data.type === 'result') {
+          setResults(data.results);
+        } else if (data.type === 'error') {
+          setResults([
+            {
+              input: [],
+              name: '',
+              expected: undefined,
+              actual: undefined,
+              passed: false,
+              error: data.message,
+            },
+          ]);
+        }
+      },
+    );
+  }, [running, code, problem, postMessage]);
 
-  const execute = () => {
-    if (!workerRef.current || running || executing) return;
+  /** Execute code (console-only) via the worker. */
+  const execute = useCallback(() => {
+    if (running || executing) return;
     setExecuting(true);
     setConsoleLogs([]);
-    const worker = workerRef.current;
-    worker.onmessage = (event) => {
-      worker.onmessage = null;
+    postMessage({ type: 'execute', code, constants: problem.constants }, (data: WorkerResponse) => {
       setExecuting(false);
-      const data = event.data as WorkerResponse;
       if (data.type === 'console-result') {
         setConsoleLogs(data.logs);
       }
-    };
-    const message: ExecuteMessage = { type: 'execute', code, constants: problem.constants };
-    worker.postMessage(message);
+    });
+  }, [running, executing, code, problem.constants, postMessage]);
+
+  const clearConsoleLogs = useCallback(() => setConsoleLogs([]), []);
+
+  return {
+    code,
+    setCode,
+    results,
+    running,
+    run,
+    consoleLogs,
+    executing,
+    execute,
+    clearConsoleLogs,
   };
-
-  const clearConsoleLogs = () => setConsoleLogs([]);
-
-  return { code, setCode, results, running, run, consoleLogs, executing, execute, clearConsoleLogs };
 }

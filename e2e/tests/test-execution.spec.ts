@@ -1,4 +1,5 @@
-import { test, expect } from '@playwright/test';
+import { expect, test } from '@playwright/test';
+
 import { AppPage } from '../pages/AppPage';
 
 const ANSWER_URL = 'answers/qu1/bunchoNiki/execute.ts';
@@ -82,9 +83,7 @@ test.describe('テスト実行と結果確認', () => {
     const app = new AppPage(page);
     await app.goto();
 
-    await app.setEditorCode(
-      "export const main = (hand: string): string => '役なし';"
-    );
+    await app.setEditorCode("export const main = (hand: string): string => '役なし';");
     await app.runTests(90000);
 
     await expect(app.resultsArea).toContainText('FAIL');

@@ -1,0 +1,38 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background-color: var(--bg-default);
+  overflow: hidden;
+}
+
+.panels {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+.panelsFlipped {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+  flex-direction: row-reverse;
+}
+
+.editorPane {
+  width: 60%;
+  height: 100%;
+  border-right: 1px solid var(--color-divider);
+}
+
+.editorPaneFlipped {
+  width: 60%;
+  height: 100%;
+  border-left: 1px solid var(--color-divider);
+}
+
+.resultsPane {
+  width: 40%;
+  height: 100%;
+  overflow: hidden;
+}

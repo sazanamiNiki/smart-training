@@ -1,8 +1,11 @@
-import { useMemo, useState, useEffect } from 'react';
-import { Box, FormControl, InputLabel, MenuItem, Select, Typography } from '@mui/material';
+import { CircularProgress, FormControl, InputLabel, MenuItem, Select, Typography } from '@mui/material';
 import type { SelectChangeEvent } from '@mui/material';
-import { Answer, fetchAnswerMeta, fetchAnswerDetail } from '../../problems/answers';
+
+import { useEffect, useMemo, useState } from 'react';
+
+import { Answer, fetchAnswerDetail, fetchAnswerMeta } from '../../problems/answers';
 import AnswerItem from './AnswerItem';
+import styles from './CommunityAnswers.module.css';
 import type { CommunityAnswersProps } from './types';
 
 /**
@@ -12,18 +15,24 @@ import type { CommunityAnswersProps } from './types';
  */
 export default function CommunityAnswers({ quId }: CommunityAnswersProps) {
   const [answers, setAnswers] = useState<Answer[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let mounted = true;
+    setLoading(true);
     (async () => {
-      const metaList = await fetchAnswerMeta();
-      const filtered = metaList.filter((m: { quId: string }) => m.quId === quId);
-      const details = await Promise.all(
-        filtered.map((m: { quId: string; answerId: string }) => fetchAnswerDetail(m.quId, m.answerId))
-      );
-      if (mounted) setAnswers(details);
+      try {
+        const metaList = await fetchAnswerMeta();
+        const filtered = metaList.filter((m: { quId: string }) => m.quId === quId);
+        const details = await Promise.all(filtered.map((m: { quId: string; answerId: string }) => fetchAnswerDetail(m.quId, m.answerId)));
+        if (mounted) setAnswers(details);
+      } finally {
+        if (mounted) setLoading(false);
+      }
     })();
-    return () => { mounted = false; };
+    return () => {
+      mounted = false;
+    };
   }, [quId]);
   const [selectedId, setSelectedId] = useState<string>('');
 
@@ -31,35 +40,35 @@ export default function CommunityAnswers({ quId }: CommunityAnswersProps) {
     setSelectedId(answers.length > 0 ? answers[0].answerId : '');
   }, [quId, answers]);
 
-  const selectedAnswer = useMemo(
-    () => answers.find((a: { answerId: string }) => a.answerId === selectedId) ?? null,
-    [answers, selectedId]
-  );
+  const selectedAnswer = useMemo(() => answers.find((a: { answerId: string }) => a.answerId === selectedId) ?? null, [answers, selectedId]);
 
   function handleChange(event: SelectChangeEvent) {
     setSelectedId(event.target.value);
   }
 
+  if (loading) {
+    return (
+      <div className={styles.loadingWrap}>
+        <CircularProgress size={24} />
+      </div>
+    );
+  }
+
   if (answers.length === 0) {
     return (
-      <Box sx={{ flex: 1, overflow: 'auto', p: 2 }}>
+      <div className={styles.emptyWrap}>
         <Typography variant="body2" color="text.secondary">
           まだ回答がありません
         </Typography>
-      </Box>
+      </div>
     );
   }
 
   return (
-    <Box data-testid="community-answers" sx={{ flex: 1, overflow: 'hidden', p: 2, display: 'flex', flexDirection: 'column', gap: 2, minHeight: 0 }}>
+    <div data-testid="community-answers" className={styles.root}>
       <FormControl size="small" fullWidth>
         <InputLabel id="answerer-select-label">回答者</InputLabel>
-        <Select
-          labelId="answerer-select-label"
-          value={selectedId}
-          label="回答者"
-          onChange={handleChange}
-        >
+        <Select labelId="answerer-select-label" value={selectedId} label="回答者" onChange={handleChange}>
           {answers.map((a: { answerId: string }) => (
             <MenuItem key={a.answerId} value={a.answerId}>
               {a.answerId}
@@ -69,6 +78,6 @@ export default function CommunityAnswers({ quId }: CommunityAnswersProps) {
       </FormControl>
 
       {selectedAnswer && <AnswerItem answer={selectedAnswer} />}
-    </Box>
+    </div>
   );
 }

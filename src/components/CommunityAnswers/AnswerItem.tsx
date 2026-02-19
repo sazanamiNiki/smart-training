@@ -1,11 +1,14 @@
-import { useState } from 'react';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import ExpandLessIcon from '@mui/icons-material/ExpandLess';
-import { Box, Typography } from '@mui/material';
-import type { AnswerItemProps } from './types';
 import { Editor } from '@monaco-editor/react';
+import ExpandLessIcon from '@mui/icons-material/ExpandLess';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import { Typography } from '@mui/material';
 import ReactMarkdown from 'react-markdown';
+
+import { useState } from 'react';
+
 import { MarkdownWrapper } from '../MarkdownWrapper/MarkdownWrapper';
+import styles from './AnswerItem.module.css';
+import type { AnswerItemProps } from './types';
 
 /**
  * Render a single community answer entry.
@@ -17,49 +20,23 @@ export default function AnswerItem({ answer }: AnswerItemProps) {
   const hasDescription = Boolean(answer.description);
 
   return (
-    <Box
-      data-testid="answer-item"
-      sx={{
-        flex: 1,
-        minHeight: 0,
-        display: 'flex',
-        flexDirection: 'column',
-        border: '1px solid',
-        borderColor: 'divider',
-        borderRadius: 1,
-        overflow: 'hidden',
-      }}
-    >
+    <div data-testid="answer-item" className={styles.root}>
       {hasDescription && (
-        <Box
-          onClick={() => setOpen(!open)}
-          sx={{
-            flexShrink: 0,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            px: 2,
-            py: 0.5,
-            cursor: 'pointer',
-            borderBottom: '1px solid',
-            borderColor: 'divider',
-            '&:hover': { bgcolor: 'action.hover' },
-          }}
-        >
+        <div onClick={() => setOpen(!open)} className={styles.descriptionToggle}>
           <Typography variant="caption" color="text.secondary">
             解説
           </Typography>
-          {open ? <ExpandLessIcon sx={{ fontSize: 16 }} /> : <ExpandMoreIcon sx={{ fontSize: 16 }} />}
-        </Box>
+          {open ? <ExpandLessIcon className={styles.expandIcon} /> : <ExpandMoreIcon className={styles.expandIcon} />}
+        </div>
       )}
 
-      <Box sx={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', margin: '4px' }}>
+      <div className={styles.content}>
         {hasDescription && open && (
           <MarkdownWrapper height={'30%'}>
             <ReactMarkdown data-testid="tabDescription">{answer.description ?? ''}</ReactMarkdown>
           </MarkdownWrapper>
         )}
-        <Box sx={{ flex: 7, minHeight: 0 }}>
+        <div className={styles.editorWrap}>
           <Editor
             height="100%"
             value={answer.code}
@@ -77,12 +54,12 @@ export default function AnswerItem({ answer }: AnswerItemProps) {
               contextmenu: false,
               padding: {
                 top: 8,
-                bottom: 8
+                bottom: 8,
               },
             }}
           />
-        </Box>
-      </Box>
-    </Box>
+        </div>
+      </div>
+    </div>
   );
 }

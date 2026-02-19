@@ -1,22 +1,13 @@
 import tseslint from '@typescript-eslint/eslint-plugin';
 import tsParser from '@typescript-eslint/parser';
+import prettierConfig from 'eslint-config-prettier';
+import prettierPlugin from 'eslint-plugin-prettier';
 import reactPlugin from 'eslint-plugin-react';
 import reactHooksPlugin from 'eslint-plugin-react-hooks';
-import reactNativePlugin from 'eslint-plugin-react-native';
-import prettierPlugin from 'eslint-plugin-prettier';
-import prettierConfig from 'eslint-config-prettier';
 
 export default [
   {
-    ignores: [
-      'node_modules/**',
-      '.expo/**',
-      'dist/**',
-      'static/*',
-      'build/**',
-      '*.config.js',
-      '*.config.mjs',
-    ],
+    ignores: ['node_modules/**', 'dist/**', 'static/*', 'build/**', '*.config.js', '*.config.mjs'],
   },
   {
     files: ['**/*.{ts,tsx,js,jsx}'],
@@ -48,7 +39,6 @@ export default [
       '@typescript-eslint': tseslint,
       react: reactPlugin,
       'react-hooks': reactHooksPlugin,
-      'react-native': reactNativePlugin,
       prettier: prettierPlugin,
     },
     settings: {
@@ -67,11 +57,6 @@ export default [
       '@typescript-eslint/explicit-module-boundary-types': 'off',
       '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
       '@typescript-eslint/no-require-imports': 'off',
-      'react-native/no-unused-styles': 'warn',
-      'react-native/split-platform-components': 'warn',
-      'react-native/no-inline-styles': 'warn',
-      'react-native/no-color-literals': 'off',
-      'react-native/no-raw-text': 'off',
     },
   },
 ];
