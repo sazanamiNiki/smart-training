@@ -21,14 +21,20 @@ export const Results = ({ running, results, code, quId }: Props) => {
   const [openIndexes, setOpenIndexes] = useState<number[]>([]);
   const { githubUser } = useGitHubAuth();
   const [answers, setAnswers] = useState<Answer[]>([]);
+  const [answersLoading, setAnswersLoading] = useState(true);
 
   useEffect(() => {
     let mounted = true;
+    setAnswersLoading(true);
     (async () => {
-      const metaList = await fetchAnswerMeta();
-      const filtered = metaList.filter((m: { quId: string }) => m.quId === quId);
-      const details = await Promise.all(filtered.map((m: { quId: string; answerId: string }) => fetchAnswerDetail(m.quId, m.answerId)));
-      if (mounted) setAnswers(details);
+      try {
+        const metaList = await fetchAnswerMeta();
+        const filtered = metaList.filter((m: { quId: string }) => m.quId === quId);
+        const details = await Promise.all(filtered.map((m: { quId: string; answerId: string }) => fetchAnswerDetail(m.quId, m.answerId)));
+        if (mounted) setAnswers(details);
+      } finally {
+        if (mounted) setAnswersLoading(false);
+      }
     })();
     return () => {
       mounted = false;
@@ -75,7 +81,11 @@ export const Results = ({ running, results, code, quId }: Props) => {
             </List>
           </div>
           {allPassed &&
-            (isAlreadySubmitted ? (
+            (answersLoading ? (
+              <div className={styles.submittedSection}>
+                <CircularProgress size={20} />
+              </div>
+            ) : isAlreadySubmitted ? (
               <div className={styles.submittedSection}>
                 <Typography variant="body2" color="success.main">
                   回答済み

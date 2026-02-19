@@ -8,6 +8,14 @@
   min-height: 0;
 }
 
+.loadingWrap {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
 .emptyWrap {
   flex: 1;
   overflow: auto;

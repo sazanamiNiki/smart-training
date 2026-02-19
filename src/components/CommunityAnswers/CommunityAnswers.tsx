@@ -1,4 +1,4 @@
-import { FormControl, InputLabel, MenuItem, Select, Typography } from '@mui/material';
+import { CircularProgress, FormControl, InputLabel, MenuItem, Select, Typography } from '@mui/material';
 import type { SelectChangeEvent } from '@mui/material';
 
 import { useEffect, useMemo, useState } from 'react';
@@ -15,14 +15,20 @@ import type { CommunityAnswersProps } from './types';
  */
 export default function CommunityAnswers({ quId }: CommunityAnswersProps) {
   const [answers, setAnswers] = useState<Answer[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let mounted = true;
+    setLoading(true);
     (async () => {
-      const metaList = await fetchAnswerMeta();
-      const filtered = metaList.filter((m: { quId: string }) => m.quId === quId);
-      const details = await Promise.all(filtered.map((m: { quId: string; answerId: string }) => fetchAnswerDetail(m.quId, m.answerId)));
-      if (mounted) setAnswers(details);
+      try {
+        const metaList = await fetchAnswerMeta();
+        const filtered = metaList.filter((m: { quId: string }) => m.quId === quId);
+        const details = await Promise.all(filtered.map((m: { quId: string; answerId: string }) => fetchAnswerDetail(m.quId, m.answerId)));
+        if (mounted) setAnswers(details);
+      } finally {
+        if (mounted) setLoading(false);
+      }
     })();
     return () => {
       mounted = false;
@@ -38,6 +44,14 @@ export default function CommunityAnswers({ quId }: CommunityAnswersProps) {
 
   function handleChange(event: SelectChangeEvent) {
     setSelectedId(event.target.value);
+  }
+
+  if (loading) {
+    return (
+      <div className={styles.loadingWrap}>
+        <CircularProgress size={24} />
+      </div>
+    );
   }
 
   if (answers.length === 0) {

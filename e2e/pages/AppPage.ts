@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { type Locator, type Page, expect } from '@playwright/test';
 
 /**
@@ -125,7 +126,6 @@ export class AppPage {
    */
   async getCommunityAnswerCode(): Promise<string | null> {
     return this.page.evaluate(() => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const win = window as any;
       const editors: any[] = win.monaco?.editor?.getEditors?.() ?? [];
       for (let i = editors.length - 1; i >= 0; i--) {

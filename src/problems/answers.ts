@@ -7,8 +7,8 @@ export interface Answer {
   description?: string;
 }
 
-let answerMetaCache: Array<{ quId: string; answerId: string; hasDescription: boolean }> | null = null;
-const answerDetailCache: Record<string, Answer> = {};
+let answerMetaPromise: Promise<Array<{ quId: string; answerId: string; hasDescription: boolean }>> | null = null;
+const answerDetailCache: Record<string, Promise<Answer>> = {};
 
 /**
  * Resolve the base URL for fetching answer assets.
@@ -27,11 +27,14 @@ const baseUrl = getBaseUrl();
  * answers/answers-index.jsonからメタ情報のみ取得
  */
 export async function fetchAnswerMeta(): Promise<Array<{ quId: string; answerId: string; hasDescription: boolean }>> {
-  if (answerMetaCache) return answerMetaCache;
-  const res = await fetch(`${baseUrl}/answers/answers-index.json`);
-  if (!res.ok) throw new Error('answers-index.json fetch failed');
-  answerMetaCache = await res.json();
-  return answerMetaCache ?? [];
+  if (!answerMetaPromise) {
+    answerMetaPromise = (async () => {
+      const res = await fetch(`${baseUrl}/answers/answers-index.json`);
+      if (!res.ok) throw new Error('answers-index.json fetch failed');
+      return (await res.json()) ?? [];
+    })();
+  }
+  return answerMetaPromise;
 }
 
 /**
@@ -39,15 +42,17 @@ export async function fetchAnswerMeta(): Promise<Array<{ quId: string; answerId:
  */
 export async function fetchAnswerDetail(quId: string, answerId: string): Promise<Answer> {
   const key = `${quId}/${answerId}`;
-  if (answerDetailCache[key]) return answerDetailCache[key];
-  const codeUrl = `${baseUrl}/answers/${quId}/${answerId}/execute.ts`;
-  const descUrl = `${baseUrl}/answers/${quId}/${answerId}/description.md`;
-  const [codeRes, descRes] = await Promise.all([fetch(codeUrl), fetch(descUrl)]);
-  if (!codeRes.ok) throw new Error('code.ts fetch failed');
-  const code = await codeRes.text();
-  let description: string | undefined = undefined;
-  if (descRes.ok) description = await descRes.text();
-  const answer: Answer = { answerId, code, description };
-  answerDetailCache[key] = answer;
-  return answer;
+  if (!answerDetailCache[key]) {
+    answerDetailCache[key] = (async () => {
+      const codeUrl = `${baseUrl}/answers/${quId}/${answerId}/execute.ts`;
+      const descUrl = `${baseUrl}/answers/${quId}/${answerId}/description.md`;
+      const [codeRes, descRes] = await Promise.all([fetch(codeUrl), fetch(descUrl)]);
+      if (!codeRes.ok) throw new Error('code.ts fetch failed');
+      const code = await codeRes.text();
+      let description: string | undefined = undefined;
+      if (descRes.ok) description = await descRes.text();
+      return { answerId, code, description };
+    })();
+  }
+  return answerDetailCache[key];
 }

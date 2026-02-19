@@ -3,27 +3,20 @@ import type { TestResult, WorkerRequest, WorkerResponse } from '../types';
 import { CONSOLE_MOCK } from './mocks/console-mock';
 import { VITEST_MOCK } from './mocks/vitest-mock';
 
-// ---------------------------------------------------------------------------
-// Sandbox hardening: disable dangerous global APIs to prevent data exfiltration
-// Note: fetch is disabled lazily (after esbuild-wasm init) via lockdownSandbox()
-// ---------------------------------------------------------------------------
 let sandboxLocked = false;
 
 function lockdownSandbox() {
   if (sandboxLocked) return;
   sandboxLocked = true;
-  const g = self as unknown as Record<string, unknown>;
-  g.fetch = undefined;
-  g.XMLHttpRequest = undefined;
-  g.WebSocket = undefined;
-  g.EventSource = undefined;
-  g.indexedDB = undefined;
-  g.caches = undefined;
+  const props = ['fetch', 'XMLHttpRequest', 'WebSocket', 'EventSource', 'indexedDB', 'caches'];
+  for (const prop of props) {
+    try {
+      Object.defineProperty(self, prop, { value: undefined, writable: false, configurable: true });
+    } catch {
+      // Some properties may not be configurable in all environments
+    }
+  }
 }
-
-// ---------------------------------------------------------------------------
-// Code transformation helpers
-// ---------------------------------------------------------------------------
 
 /** Strip ES module syntax so code can run inside `new Function()`. */
 function stripModuleSyntax(code: string): string {
@@ -50,10 +43,6 @@ function buildUserCode(code: string, constants?: string) {
   return { userJsCode, constantsJsCode };
 }
 
-// ---------------------------------------------------------------------------
-// Execution strategies
-// ---------------------------------------------------------------------------
-
 /** Run test cases against user code and return results + console logs. */
 function runTest({ code, constants, testCode, testCases }: { code: string; constants?: string; testCode: string; testCases: unknown[] }) {
   const { userJsCode, constantsJsCode } = buildUserCode(code, constants);
@@ -76,10 +65,6 @@ function executeCode({ code, constants }: { code: string; constants?: string }) 
   const body = [CONSOLE_MOCK, constantsJsCode, userJsCode, 'return __consoleLogs;'].join('\n');
   return new Function(body)();
 }
-
-// ---------------------------------------------------------------------------
-// Worker message handler
-// ---------------------------------------------------------------------------
 
 self.onmessage = async (event) => {
   try {
