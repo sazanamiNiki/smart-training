@@ -1,3 +1,5 @@
+import DarkModeIcon from '@mui/icons-material/DarkMode';
+import LightModeIcon from '@mui/icons-material/LightMode';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import { FormControl, IconButton, Menu, MenuItem, Select, Typography } from '@mui/material';
 
@@ -90,6 +92,13 @@ export default function HeaderBar({
               {githubUser}
             </Typography>
           )}
+          <IconButton
+            size="small"
+            onClick={() => onColorModeChange(colorMode === 'dark' ? 'light' : 'dark')}
+            aria-label={colorMode === 'dark' ? 'ライトモードに切り替え' : 'ダークモードに切り替え'}
+          >
+            {colorMode === 'dark' ? <LightModeIcon fontSize="small" /> : <DarkModeIcon fontSize="small" />}
+          </IconButton>
           <IconButton size="small" onClick={openMenu} aria-label="メニューを開く">
             <MoreVertIcon fontSize="small" />
           </IconButton>
