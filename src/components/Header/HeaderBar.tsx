@@ -1,5 +1,7 @@
+import Brightness4Icon from '@mui/icons-material/Brightness4';
+import Brightness7Icon from '@mui/icons-material/Brightness7';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
-import { FormControl, IconButton, Menu, MenuItem, Select, Typography } from '@mui/material';
+import { FormControl, IconButton, Menu, MenuItem, Select, Tooltip, Typography } from '@mui/material';
 
 import { useState } from 'react';
 
@@ -90,6 +92,15 @@ export default function HeaderBar({
               {githubUser}
             </Typography>
           )}
+          <Tooltip title={colorMode === 'dark' ? 'ライトモードに切替' : 'ダークモードに切替'}>
+            <IconButton
+              size="small"
+              onClick={() => onColorModeChange(colorMode === 'dark' ? 'light' : 'dark')}
+              aria-label={colorMode === 'dark' ? 'ライトモードに切替' : 'ダークモードに切替'}
+            >
+              {colorMode === 'dark' ? <Brightness7Icon fontSize="small" /> : <Brightness4Icon fontSize="small" />}
+            </IconButton>
+          </Tooltip>
           <IconButton size="small" onClick={openMenu} aria-label="メニューを開く">
             <MoreVertIcon fontSize="small" />
           </IconButton>
