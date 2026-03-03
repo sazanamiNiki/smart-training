@@ -2,81 +2,126 @@
 
 ## ランタイム制約
 
-Cloudflare Workers は Node.js ではなく **V8 ベースの独自ランタイム** で動作する。Node.js の API は使用できない。
+Cloudflare Workers は Node.js ではなく V8 ベースの独自ランタイムで動作する。フロントエンドや Node.js の感覚でコードを書くと実行時エラーが発生する。
 
-### 使用禁止
+### 環境変数
 
-- `process.env` → 環境変数へのアクセスは **バインディング経由** のみ（`env.VARIABLE_NAME`）
-- `fs`・`path` などの Node.js 組み込みモジュール
-- `setTimeout`・`setInterval`（Worker の実行モデル上、動作しない）
+- ❌ `process.env.VARIABLE_NAME` は使えない
+- ✅ バインディング経由で `env.VARIABLE_NAME` を使う
+
+```ts
+export default {
+  async fetch(request: Request, env: Env): Promise<Response> {
+    const token = env.ANTHROPIC_API_KEY;
+  },
+};
+```
+
+### Node.js 組み込みモジュール
+
+- ❌ `fs`・`path`・`os`・`crypto`（Node.js版）等は使えない
+- ✅ Web標準API（`crypto.subtle`、`URL`、`Headers` 等）を使う
+
+### タイマー
+
+- ❌ `setTimeout`・`setInterval` は Worker の実行モデル上、期待通りに動作しない
+- ✅ 非同期処理は `async/await` で直接記述する
+
+---
 
 ## レスポンス
 
-レスポンスは必ず `new Response()` で返す。
+- レスポンスは必ず `new Response()` で返す
+- ステータスコードと `Content-Type` ヘッダーを明示する
 
 ```ts
 return new Response(JSON.stringify(data), {
   status: 200,
-  headers: { 'Content-Type': 'application/json' },
+  headers: { "Content-Type": "application/json" },
 });
 ```
 
-エラー時はステータスコードを明示する。
-
-```ts
-try {
-  // ...
-} catch (e) {
-  return new Response(JSON.stringify({ error: 'Internal Server Error' }), {
-    status: 500,
-    headers: { 'Content-Type': 'application/json' },
-  });
-}
-```
+---
 
 ## 非同期処理
 
-非同期処理は必ず `await` する。Worker はリクエストごとに独立して実行されるため、未解決の Promise はリクエスト終了時に破棄される。
+- 非同期処理は必ず `await` する
+- Worker はリクエストごとに独立して実行されるため、未 await の Promise は完了が保証されない
+- バックグラウンド処理には `ctx.waitUntil()` を使う
 
 ```ts
-const result = await env.DB.prepare('SELECT * FROM submissions').all();
+export default {
+  async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
+    ctx.waitUntil(someBackgroundTask(env));
+    return new Response("OK");
+  },
+};
 ```
+
+---
 
 ## D1（SQLite）
 
-クエリは `env.DB.prepare().bind().run()` パターンを使う。
+- クエリは `env.DB.prepare().bind().run()` パターンを使う
+- SELECT は `.all()` または `.first()` を使う
 
 ```ts
-// SELECT
-const { results } = await env.DB.prepare(
-  'SELECT * FROM submissions WHERE user_id = ?'
+const result = await env.DB.prepare(
+  "SELECT * FROM submissions WHERE user_id = ?"
 ).bind(userId).all();
 
-// INSERT / UPDATE
+const row = await env.DB.prepare(
+  "SELECT * FROM submissions WHERE id = ?"
+).bind(id).first();
+
 await env.DB.prepare(
-  'INSERT INTO submissions (user_id, qu_id) VALUES (?, ?)'
+  "INSERT INTO submissions (user_id, qu_id) VALUES (?, ?)"
 ).bind(userId, quId).run();
 ```
 
+---
+
 ## R2（オブジェクトストレージ）
 
-put / get は `env.REVIEW_STORAGE` バインディング経由でアクセスする。
+- put: `env.REVIEW_STORAGE.put(key, value)`
+- get: `env.REVIEW_STORAGE.get(key)`
+- get の結果は null チェックしてから `.text()` / `.json()` / `.arrayBuffer()` で取得する
 
 ```ts
-// 保存
-await env.REVIEW_STORAGE.put(key, value);
+await env.REVIEW_STORAGE.put(`reviews/${userId}/review.md`, markdownText);
 
-// 取得
-const obj = await env.REVIEW_STORAGE.get(key);
+const obj = await env.REVIEW_STORAGE.get(`reviews/${userId}/review.md`);
 if (obj === null) {
-  return new Response('Not Found', { status: 404 });
+  return new Response("Not found", { status: 404 });
 }
 const text = await obj.text();
 ```
 
+---
+
+## エラーハンドリング
+
+- catch 節では必ずステータスコードを明示した `Response` を返す
+- エラー内容を外部に漏らさない（本番では汎用メッセージを返す）
+
+```ts
+try {
+  const data = await processRequest(request, env);
+  return new Response(JSON.stringify(data), {
+    status: 200,
+    headers: { "Content-Type": "application/json" },
+  });
+} catch (err) {
+  console.error(err);
+  return new Response("Internal Server Error", { status: 500 });
+}
+```
+
+---
+
 ## 型定義
 
-Worker のバインディング型は `cloudflare/types.ts` で定義する。
+Worker のバインディング型は `cloudflare/types.ts` で一元管理する。
 
 ```ts
 export interface Env {
@@ -85,14 +130,4 @@ export interface Env {
   ANTHROPIC_API_KEY: string;
   SLACK_BOT_TOKEN: string;
 }
-```
-
-ハンドラの第2引数として受け取り、直接参照する。
-
-```ts
-export default {
-  async fetch(request: Request, env: Env): Promise<Response> {
-    // env.DB, env.REVIEW_STORAGE, env.ANTHROPIC_API_KEY ...
-  },
-};
 ```
