@@ -1,4 +1,4 @@
 name = "github-proxy"
 main = "./github-oauth-proxy.js"
 compatibility_date = "2025-01-01"
-account_id = "6cd683876d257016ae921d9ff2456036"
+account_id = "a412a24c79d616c67bb597b17cea0d52"
