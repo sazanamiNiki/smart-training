@@ -35,3 +35,5 @@ playwright-report
 .env.local
 .env.production.local
 .env.development.local
+# Environment cloudflare
+.dev.vars
