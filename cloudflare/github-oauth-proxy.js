@@ -61,7 +61,7 @@ async function generateAppJWT(appId, privateKeyPem) {
 
   const now = Math.floor(Date.now() / 1000);
   const h = b64url(JSON.stringify({ alg: 'RS256', typ: 'JWT' }));
-  const p = b64url(JSON.stringify({ iat: now - 60, exp: now + 600, iss: String(appId) }));
+  const p = b64url(JSON.stringify({ iat: now - 60, exp: now + 600, iss: parseInt(appId, 10) }));
   const sig = await crypto.subtle.sign(
     'RSASSA-PKCS1-v1_5', key,
     new TextEncoder().encode(`${h}.${p}`)
