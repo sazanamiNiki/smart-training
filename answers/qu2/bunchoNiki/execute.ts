@@ -1,19 +1,5 @@
+
 const LAST_FRAME_INDEX = 9;
-
-type PinCount = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10;
-
-type Tuple<T, N extends number, R extends T[] = []> =
-  R['length'] extends N
-  ? R
-  : Tuple<T, N, [...R, T]>;
-
-type RegularFrame = [PinCount, PinCount];
-
-type FinalFrame = [PinCount, PinCount, PinCount];
-
-type FirstNineFrames = Tuple<RegularFrame, 9>;
-
-type BowlingFrames = [...FirstNineFrames, FinalFrame];
 
 const sumScore = ([fst, second]: PinCount[], next: PinCount[], extra: PinCount[] = []): number => {
   if (fst !== STRIKE_BASE_SCORE && fst + second !== SPARE_BASE_SCORE) {
