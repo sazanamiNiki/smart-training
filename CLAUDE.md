@@ -97,6 +97,12 @@ smart-training/
 | `npm test` | Vitest（問題テストケース実行） |
 | `npm run test:e2e` | Playwright E2Eテスト |
 | `npm run lint` | ESLint（--max-warnings 0） |
+| `wrangler dev` | Workerローカル開発サーバー起動 |
+| `wrangler d1 execute smart-training --local --file=<file>` | D1ローカルマイグレーション実行 |
+| `wrangler d1 execute smart-training --local --command="SELECT ..."` | D1ローカルクエリ実行 |
+| `wrangler r2 object get smart-training-reviews <key> --local` | R2ローカルオブジェクト取得 |
+| `wrangler deploy` | Worker本番デプロイ |
+| `wrangler secret list` | 登録済みシークレット一覧 |
 
 ## 環境変数（.env）
 
