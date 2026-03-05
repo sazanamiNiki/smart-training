@@ -28,7 +28,6 @@ playwright-report
 *.sw?
 
 # Claude Code settings
-.claude/
 .claudeignore
 # Environment variables
 .env

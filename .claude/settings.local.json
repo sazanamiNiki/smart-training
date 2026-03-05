@@ -1,0 +1,50 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls -R *)",
+      "Bash(find *)",
+      "Bash(cat *)",
+      "Bash(grep *)",
+      "Bash(tree *)",
+      "Bash(echo *)",
+      "Bash(npm run lint)",
+      "Bash(npm test)",
+      "Bash(npx tsc)",
+      "Bash(npx vite build)",
+      "Bash(node *)",
+      "Bash(git status)",
+      "Bash(git log *)",
+      "Bash(git diff *)",
+      "Bash(git show *)",
+      "Bash(git branch)",
+      "Bash(git checkout *)",
+      "Bash(git add *)",
+      "WebFetch(domain:*.workers.dev)",
+      "WebFetch(domain:api.github.com)",
+      "WebFetch(domain:cloudflare.com)",
+      "Bash(npx tsc:*)",
+      "Bash(gh run view:*)",
+      "Bash(npx playwright test:*)",
+      "Bash(gh run list:*)",
+      "Bash(gh run watch:*)",
+      "Bash(gh pr view:*)",
+      "Bash(gh pr checks:*)"
+    ],
+    "deny": [
+      "Bash(rm -rf *)",
+      "Bash(cloudflare/.dev.vars)",
+      "Read(./.env)",
+      "Read(./.env.*)"
+    ],
+    "ask": [
+      "Bash(git commit *)",
+      "Bash(git push *)",
+      "Bash(git merge *)",
+      "Bash(git rebase *)",
+      "Bash(git reset *)",
+      "Bash(npm install *)",
+      "Bash(gh repo *)",
+      "Bash(wrangler *)"
+    ]
+  }
+}
