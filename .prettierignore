@@ -8,3 +8,4 @@ public/
 package-lock.json
 playwright-report/
 test-results/
+.claude/

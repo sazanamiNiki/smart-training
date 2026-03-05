@@ -2,8 +2,14 @@
 export interface Env {
   DB: D1Database;
   REVIEW_STORAGE: R2Bucket;
+  // 'local' | 'dev' | 'production'
+  ENVIRONMENT: string;
+  // dev環境以上で使用
   ANTHROPIC_API_KEY: string;
-  SLACK_BOT_TOKEN: string;
+  // local環境で使用
+  GEMINI_API_KEY: string;
+  // 全環境で使用
+  GAS_WEBHOOK_URL: string;
 }
 
 /** D1 submissions table record. */
