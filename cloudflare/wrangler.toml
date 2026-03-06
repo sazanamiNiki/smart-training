@@ -2,3 +2,13 @@ name = "github-proxy"
 main = "./github-oauth-proxy.js"
 compatibility_date = "2025-01-01"
 account_id = "a412a24c79d616c67bb597b17cea0d52"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "smart-training"
+database_id = "ec1d944e-9c6c-4b80-81d8-510acb9380f1"
+migrations_dir = "./migrations"
+
+[[r2_buckets]]
+binding = "REVIEW_STORAGE"
+bucket_name = "smart-training-reviews"
