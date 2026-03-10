@@ -3,6 +3,9 @@ main = "./github-oauth-proxy.js"
 compatibility_date = "2025-01-01"
 account_id = "a412a24c79d616c67bb597b17cea0d52"
 
+[vars]
+ENVIRONMENT = "local"
+
 [[d1_databases]]
 binding = "DB"
 database_name = "smart-training"

@@ -1,5 +1,20 @@
-
 const ALLOWED_ORIGIN = 'https://sazanaminiki.github.io';
+
+const REVIEW_SYSTEM_PROMPT = `あなたはTypeScriptのコードレビュアーです。
+提出されたコードを分析し、以下の観点でMarkdown形式のレビューを日本語で返してください。
+
+## レビュー観点
+1. **コード品質**: 可読性・保守性・命名規則
+2. **改善点**: より良い実装方法・リファクタリングの提案
+3. **良い点**: 適切な実装・工夫されている部分
+
+## 出力形式
+必ず以下のセクションを含むMarkdownで返してください：
+- ## コード品質
+- ## 改善点
+- ## 良い点
+
+簡潔に、開発者が学習できるフィードバックを提供してください。`;
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': ALLOWED_ORIGIN,
@@ -13,10 +28,7 @@ const SECURITY_HEADERS = {
   'Referrer-Policy': 'strict-origin-when-cross-origin',
 };
 
-const PROXY_PATHS = [
-  '/login/device/code',
-  '/login/oauth/access_token',
-];
+const PROXY_PATHS = ['/login/device/code', '/login/oauth/access_token'];
 
 /**
  * Encode data to base64url format.
@@ -25,9 +37,7 @@ const PROXY_PATHS = [
  * @returns Base64url-encoded string.
  */
 function b64url(data) {
-  const bytes = data instanceof ArrayBuffer
-    ? new Uint8Array(data)
-    : new TextEncoder().encode(typeof data === 'string' ? data : '');
+  const bytes = data instanceof ArrayBuffer ? new Uint8Array(data) : new TextEncoder().encode(typeof data === 'string' ? data : '');
   let binary = '';
   for (let i = 0; i < bytes.length; i++) {
     binary += String.fromCharCode(bytes[i]);
@@ -51,21 +61,14 @@ async function generateAppJWT(appId, privateKeyPem) {
   if (pem.length % 4 === 1) {
     throw new Error(`Invalid PEM base64 length: ${pem.length}`);
   }
-  const padded = pem + '='.repeat((4 - pem.length % 4) % 4);
-  const der = Uint8Array.from(atob(padded), c => c.charCodeAt(0));
-  const key = await crypto.subtle.importKey(
-    'pkcs8', der,
-    { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' },
-    false, ['sign']
-  );
+  const padded = pem + '='.repeat((4 - (pem.length % 4)) % 4);
+  const der = Uint8Array.from(atob(padded), (c) => c.charCodeAt(0));
+  const key = await crypto.subtle.importKey('pkcs8', der, { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' }, false, ['sign']);
 
   const now = Math.floor(Date.now() / 1000);
   const h = b64url(JSON.stringify({ alg: 'RS256', typ: 'JWT' }));
   const p = b64url(JSON.stringify({ iat: now - 60, exp: now + 600, iss: parseInt(appId, 10) }));
-  const sig = await crypto.subtle.sign(
-    'RSASSA-PKCS1-v1_5', key,
-    new TextEncoder().encode(`${h}.${p}`)
-  );
+  const sig = await crypto.subtle.sign('RSASSA-PKCS1-v1_5', key, new TextEncoder().encode(`${h}.${p}`));
   return `${h}.${p}.${b64url(sig)}`;
 }
 
@@ -92,41 +95,163 @@ async function commitFiles(installationToken, owner, repo, branch, files, messag
 
   const refRes = await fetch(`${apiBase}/git/refs/heads/${branch}`, { headers });
   if (!refRes.ok) throw new Error(`Failed to get ref: ${refRes.status}`);
-  const { object: { sha: headSha } } = await refRes.json();
+  const {
+    object: { sha: headSha },
+  } = await refRes.json();
 
   const commitRes = await fetch(`${apiBase}/git/commits/${headSha}`, { headers });
   if (!commitRes.ok) throw new Error(`Failed to get commit: ${commitRes.status}`);
-  const { tree: { sha: treeSha } } = await commitRes.json();
+  const {
+    tree: { sha: treeSha },
+  } = await commitRes.json();
 
-  const treeItems = await Promise.all(files.map(async ({ path, content }) => {
-    const blobRes = await fetch(`${apiBase}/git/blobs`, {
-      method: 'POST', headers,
-      body: JSON.stringify({ content, encoding: 'utf-8' }),
-    });
-    if (!blobRes.ok) throw new Error(`Failed to create blob for ${path}: ${blobRes.status}`);
-    const { sha } = await blobRes.json();
-    return { path, mode: '100644', type: 'blob', sha };
-  }));
+  const treeItems = await Promise.all(
+    files.map(async ({ path, content }) => {
+      const blobRes = await fetch(`${apiBase}/git/blobs`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ content, encoding: 'utf-8' }),
+      });
+      if (!blobRes.ok) throw new Error(`Failed to create blob for ${path}: ${blobRes.status}`);
+      const { sha } = await blobRes.json();
+      return { path, mode: '100644', type: 'blob', sha };
+    }),
+  );
 
   const newTreeRes = await fetch(`${apiBase}/git/trees`, {
-    method: 'POST', headers,
+    method: 'POST',
+    headers,
     body: JSON.stringify({ base_tree: treeSha, tree: treeItems }),
   });
   if (!newTreeRes.ok) throw new Error(`Failed to create tree: ${newTreeRes.status}`);
   const { sha: newTreeSha } = await newTreeRes.json();
 
   const newCommitRes = await fetch(`${apiBase}/git/commits`, {
-    method: 'POST', headers,
+    method: 'POST',
+    headers,
     body: JSON.stringify({ message, tree: newTreeSha, parents: [headSha] }),
   });
   if (!newCommitRes.ok) throw new Error(`Failed to create commit: ${newCommitRes.status}`);
   const { sha: newCommitSha } = await newCommitRes.json();
 
   const updateRefRes = await fetch(`${apiBase}/git/refs/heads/${branch}`, {
-    method: 'PATCH', headers,
+    method: 'PATCH',
+    headers,
     body: JSON.stringify({ sha: newCommitSha }),
   });
   if (!updateRefRes.ok) throw new Error(`Failed to update ref: ${updateRefRes.status}`);
+}
+
+/**
+ * Call Gemini API to generate a code review.
+ *
+ * @param env - Worker environment bindings.
+ * @param code - Submitted code.
+ * @param quId - Question ID.
+ * @returns Review markdown string.
+ * @throws {Error} If the API request fails.
+ */
+async function callGeminiAPI(env, code, quId) {
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${env.GEMINI_API_KEY}`;
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      system_instruction: {
+        parts: [{ text: REVIEW_SYSTEM_PROMPT }],
+      },
+      contents: [
+        {
+          parts: [
+            {
+              text: `問題ID: ${quId}\n\n提出コード:\n\`\`\`typescript\n${code}\n\`\`\``,
+            },
+          ],
+        },
+      ],
+    }),
+  });
+  if (!res.ok) {
+    throw new Error(`Gemini API error: ${res.status} ${await res.text()}`);
+  }
+  const data = await res.json();
+  return data.candidates?.[0]?.content?.parts?.[0]?.text ?? '';
+}
+
+/**
+ * Call Claude Opus API to generate a code review.
+ *
+ * @param env - Worker environment bindings.
+ * @param code - Submitted code.
+ * @param quId - Question ID.
+ * @returns Review markdown string.
+ * @throws {Error} If the API request fails.
+ */
+async function callClaudeAPI(env, code, quId) {
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': env.ANTHROPIC_API_KEY,
+      'anthropic-version': '2023-06-01',
+    },
+    body: JSON.stringify({
+      model: 'claude-opus-4-6',
+      max_tokens: 2048,
+      system: REVIEW_SYSTEM_PROMPT,
+      messages: [
+        {
+          role: 'user',
+          content: `問題ID: ${quId}\n\n提出コード:\n\`\`\`typescript\n${code}\n\`\`\``,
+        },
+      ],
+    }),
+  });
+  if (!res.ok) {
+    throw new Error(`Claude API error: ${res.status} ${await res.text()}`);
+  }
+  const data = await res.json();
+  return data.content?.[0]?.text ?? '';
+}
+
+/**
+ * Generate a code review based on the current environment.
+ *
+ * @param env - Worker environment bindings.
+ * @param code - Submitted code.
+ * @param quId - Question ID.
+ * @returns Review markdown string.
+ * @throws {Error} If the API request fails.
+ */
+async function generateReview(env, code, quId) {
+  if (env.ENVIRONMENT === 'production') {
+    return callClaudeAPI(env, code, quId);
+  }
+  return callGeminiAPI(env, code, quId);
+}
+
+/**
+ * Run review generation in the background: generate review, save to R2, update D1.
+ *
+ * @param env - Worker environment bindings.
+ * @param userId - GitHub login.
+ * @param quId - Question ID.
+ * @param code - Submitted code.
+ * @param submissionId - D1 submission row ID.
+ */
+async function runReviewBackground(env, userId, quId, code, submissionId) {
+  const r2ReviewKey = `reviews/${userId}/${quId}/review.md`;
+  try {
+    const reviewMarkdown = await generateReview(env, code, quId);
+    await env.REVIEW_STORAGE.put(r2ReviewKey, reviewMarkdown);
+    const reviewedAt = new Date().toISOString();
+    await env.DB.prepare("UPDATE submissions SET review_status = 'completed', r2_review_key = ?, reviewed_at = ? WHERE id = ?")
+      .bind(r2ReviewKey, reviewedAt, submissionId)
+      .run();
+  } catch (err) {
+    console.error(`[review] background review failed for ${userId}/${quId}: ${err instanceof Error ? err.message : String(err)}`);
+    await env.DB.prepare("UPDATE submissions SET review_status = 'failed' WHERE id = ?").bind(submissionId).run();
+  }
 }
 
 /**
@@ -134,14 +259,16 @@ async function commitFiles(installationToken, owner, repo, branch, files, messag
  *
  * @param request - Incoming Request.
  * @param env - Cloudflare Worker environment bindings.
+ * @param ctx - Cloudflare Worker execution context.
  * @returns JSON Response.
  */
-async function handleSubmit(request, env) {
+async function handleSubmit(request, env, ctx) {
   const authHeader = request.headers.get('Authorization') ?? '';
   const userToken = authHeader.replace(/^Bearer\s+/, '');
   if (!userToken) {
     return new Response(JSON.stringify({ error: '認証トークンが必要です。' }), {
-      status: 401, headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
+      status: 401,
+      headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
     });
   }
 
@@ -160,7 +287,8 @@ async function handleSubmit(request, env) {
   if (!userRes.ok) {
     console.error(`[submit] GET /user failed: ${userRes.status} ${await userRes.text()}`);
     return new Response(JSON.stringify({ error: '認証トークンが無効です。' }), {
-      status: 401, headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
+      status: 401,
+      headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
     });
   }
 
@@ -170,18 +298,21 @@ async function handleSubmit(request, env) {
   if (!emailsRes.ok) {
     console.error(`[submit] GET /user/emails failed: ${emailsRes.status} ${await emailsRes.text()}`);
     return new Response(JSON.stringify({ error: 'メールアドレスの取得に失敗しました。' }), {
-      status: 403, headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
+      status: 403,
+      headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
     });
   }
 
   const emails = await emailsRes.json();
   const allowedDomain = env.ALLOWED_EMAIL_DOMAIN;
-  const hasAllowedEmail = emails.some(e => e.verified && e.email.endsWith(allowedDomain));
+  const allowedEmailEntry = emails.find((e) => e.verified && e.email.endsWith(allowedDomain));
+  const hasAllowedEmail = !!allowedEmailEntry;
 
   if (!hasAllowedEmail) {
     console.error(`[submit] email domain not allowed for ${login}`);
     return new Response(JSON.stringify({ error: 'Email domain not allowed' }), {
-      status: 403, headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
+      status: 403,
+      headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
     });
   }
 
@@ -190,7 +321,8 @@ async function handleSubmit(request, env) {
   const MAX_BODY_SIZE = 100 * 1024; // 100KB
   if (contentLength > MAX_BODY_SIZE) {
     return new Response(JSON.stringify({ error: 'リクエストサイズが上限を超えています。' }), {
-      status: 413, headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
+      status: 413,
+      headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
     });
   }
 
@@ -199,7 +331,8 @@ async function handleSubmit(request, env) {
     body = await request.json();
   } catch {
     return new Response(JSON.stringify({ error: 'Invalid request body.' }), {
-      status: 400, headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
+      status: 400,
+      headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
     });
   }
   const { quId, code, description } = body;
@@ -207,19 +340,22 @@ async function handleSubmit(request, env) {
   // Validate quId format to prevent path traversal
   if (!quId || typeof quId !== 'string' || !/^qu\d+$/.test(quId)) {
     return new Response(JSON.stringify({ error: 'quId の形式が不正です。' }), {
-      status: 400, headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
+      status: 400,
+      headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
     });
   }
 
   // Validate code and description
   if (!code || typeof code !== 'string' || code.length > MAX_BODY_SIZE) {
     return new Response(JSON.stringify({ error: 'code が不正です。' }), {
-      status: 400, headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
+      status: 400,
+      headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
     });
   }
   if (typeof description !== 'string' || description.length > MAX_BODY_SIZE) {
     return new Response(JSON.stringify({ error: 'description が不正です。' }), {
-      status: 400, headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
+      status: 400,
+      headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
     });
   }
 
@@ -229,27 +365,26 @@ async function handleSubmit(request, env) {
   } catch (e) {
     console.error(`[submit] generateAppJWT failed: ${e instanceof Error ? e.message : String(e)}`);
     return new Response(JSON.stringify({ error: 'JWT生成に失敗しました。' }), {
-      status: 500, headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
+      status: 500,
+      headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
     });
   }
 
-  const tokenRes = await fetch(
-    `https://api.github.com/app/installations/${env.GITHUB_APP_INSTALLATION_ID}/access_tokens`,
-    {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${appJwt}`,
-        Accept: 'application/vnd.github+json',
-        'User-Agent': 'smart-training-worker',
-        'X-GitHub-Api-Version': '2022-11-28',
-      },
-    }
-  );
+  const tokenRes = await fetch(`https://api.github.com/app/installations/${env.GITHUB_APP_INSTALLATION_ID}/access_tokens`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${appJwt}`,
+      Accept: 'application/vnd.github+json',
+      'User-Agent': 'smart-training-worker',
+      'X-GitHub-Api-Version': '2022-11-28',
+    },
+  });
 
   if (!tokenRes.ok) {
     console.error(`[submit] installation token failed: ${tokenRes.status} ${await tokenRes.text()}`);
     return new Response(JSON.stringify({ error: 'Installation token の取得に失敗しました。' }), {
-      status: 500, headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
+      status: 500,
+      headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
     });
   }
 
@@ -260,27 +395,56 @@ async function handleSubmit(request, env) {
 
   try {
     await commitFiles(
-      installationToken, env.GITHUB_OWNER, env.GITHUB_REPO, branch,
+      installationToken,
+      env.GITHUB_OWNER,
+      env.GITHUB_REPO,
+      branch,
       [
         { path: `${basePath}/execute.ts`, content: code },
         { path: `${basePath}/description.md`, content: description },
       ],
-      commitMessage
+      commitMessage,
     );
   } catch (e) {
     console.error(`[submit] commitFile failed: ${e instanceof Error ? e.message : String(e)}`);
     return new Response(JSON.stringify({ error: 'コミットに失敗しました。' }), {
-      status: 500, headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
+      status: 500,
+      headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
     });
   }
 
+  const existingSubmission = await env.DB.prepare("SELECT id FROM submissions WHERE user_id = ? AND qu_id = ? AND review_status != 'failed'")
+    .bind(login, quId)
+    .first();
+
+  if (existingSubmission) {
+    return new Response(JSON.stringify({ error: '既に提出済みです。' }), {
+      status: 409,
+      headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
+    });
+  }
+
+  const r2CodeKey = `submissions/${login}/${quId}/code.ts`;
+  await env.REVIEW_STORAGE.put(r2CodeKey, code);
+
+  const submittedAt = new Date().toISOString();
+  const insertResult = await env.DB.prepare(
+    "INSERT INTO submissions (user_id, email, qu_id, r2_code_key, review_status, submitted_at) VALUES (?, ?, ?, ?, 'pending', ?)",
+  )
+    .bind(login, allowedEmailEntry.email, quId, r2CodeKey, submittedAt)
+    .run();
+  const submissionId = insertResult.meta.last_row_id;
+
+  ctx.waitUntil(runReviewBackground(env, login, quId, code, submissionId));
+
   return new Response(JSON.stringify({ success: true }), {
-    status: 200, headers: { 'Content-Type': 'application/json', ...CORS_HEADERS, ...SECURITY_HEADERS },
+    status: 200,
+    headers: { 'Content-Type': 'application/json', ...CORS_HEADERS, ...SECURITY_HEADERS },
   });
 }
 
 export default {
-  async fetch(request, env) {
+  async fetch(request, env, ctx) {
     if (request.method === 'OPTIONS') {
       return new Response(null, { status: 204, headers: CORS_HEADERS });
     }
@@ -288,7 +452,7 @@ export default {
     const url = new URL(request.url);
 
     if (url.pathname === '/submit' && request.method === 'POST') {
-      return handleSubmit(request, env);
+      return handleSubmit(request, env, ctx);
     }
 
     if (!PROXY_PATHS.includes(url.pathname)) {
@@ -296,11 +460,13 @@ export default {
     }
 
     const target = new URL(url.pathname + url.search, 'https://github.com');
-    const proxied = await fetch(new Request(target, {
-      method: request.method,
-      headers: request.headers,
-      body: request.body,
-    }));
+    const proxied = await fetch(
+      new Request(target, {
+        method: request.method,
+        headers: request.headers,
+        body: request.body,
+      }),
+    );
 
     const response = new Response(proxied.body, {
       status: proxied.status,
