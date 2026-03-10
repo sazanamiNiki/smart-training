@@ -16,6 +16,24 @@ const REVIEW_SYSTEM_PROMPT = `あなたはTypeScriptのコードレビュアー�
 
 簡潔に、開発者が学習できるフィードバックを提供してください。`;
 
+const AGGREGATE_REVIEW_SYSTEM_PROMPT = `あなたはTypeScriptのコードレビュアーです。
+複数の問題に対して提出されたコードをまとめて分析し、開発者全体のスキルと傾向を評価してください。
+
+## レビュー観点
+1. **全体的なコードスタイル**: 命名規則・可読性・一貫性
+2. **強み**: 複数の提出を通じて見られる良いパターン・得意な実装
+3. **改善が必要な点**: 繰り返し見られる課題・成長の余地
+4. **学習アドバイス**: 今後の学習において優先すべき事項
+
+## 出力形式
+必ず以下のセクションを含むMarkdownで返してください：
+- ## 全体的なコードスタイル
+- ## 強み
+- ## 改善が必要な点
+- ## 学習アドバイス
+
+開発者が自分のスキルを客観的に把握し、次のステップを明確にできるフィードバックを提供してください。`;
+
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': ALLOWED_ORIGIN,
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
@@ -231,7 +249,136 @@ async function generateReview(env, code, quId) {
 }
 
 /**
+ * Call Gemini API to generate an aggregate code review.
+ *
+ * @param env - Worker environment bindings.
+ * @param codesWithQuId - Array of { quId, code } for all submissions.
+ * @returns Aggregate review markdown string.
+ * @throws {Error} If the API request fails.
+ */
+async function callGeminiAggregateAPI(env, codesWithQuId) {
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${env.GEMINI_API_KEY}`;
+  const codeSection = codesWithQuId.map(({ quId, code }) => `### 問題ID: ${quId}\n\`\`\`typescript\n${code}\n\`\`\``).join('\n\n');
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      system_instruction: {
+        parts: [{ text: AGGREGATE_REVIEW_SYSTEM_PROMPT }],
+      },
+      contents: [
+        {
+          parts: [
+            {
+              text: `以下は同一ユーザーが複数の問題に提出したコードです。全体を通して評価してください。\n\n${codeSection}`,
+            },
+          ],
+        },
+      ],
+    }),
+  });
+  if (!res.ok) {
+    throw new Error(`Gemini API error: ${res.status} ${await res.text()}`);
+  }
+  const data = await res.json();
+  return data.candidates?.[0]?.content?.parts?.[0]?.text ?? '';
+}
+
+/**
+ * Call Claude Opus API to generate an aggregate code review.
+ *
+ * @param env - Worker environment bindings.
+ * @param codesWithQuId - Array of { quId, code } for all submissions.
+ * @returns Aggregate review markdown string.
+ * @throws {Error} If the API request fails.
+ */
+async function callClaudeAggregateAPI(env, codesWithQuId) {
+  const codeSection = codesWithQuId.map(({ quId, code }) => `### 問題ID: ${quId}\n\`\`\`typescript\n${code}\n\`\`\``).join('\n\n');
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': env.ANTHROPIC_API_KEY,
+      'anthropic-version': '2023-06-01',
+    },
+    body: JSON.stringify({
+      model: 'claude-opus-4-6',
+      max_tokens: 4096,
+      system: AGGREGATE_REVIEW_SYSTEM_PROMPT,
+      messages: [
+        {
+          role: 'user',
+          content: `以下は同一ユーザーが複数の問題に提出したコードです。全体を通して評価してください。\n\n${codeSection}`,
+        },
+      ],
+    }),
+  });
+  if (!res.ok) {
+    throw new Error(`Claude API error: ${res.status} ${await res.text()}`);
+  }
+  const data = await res.json();
+  return data.content?.[0]?.text ?? '';
+}
+
+/**
+ * Generate an aggregate review from all user submissions.
+ *
+ * @param env - Worker environment bindings.
+ * @param codesWithQuId - Array of { quId, code } for all submissions.
+ * @returns Aggregate review markdown string.
+ * @throws {Error} If the API request fails.
+ */
+async function generateAggregateReview(env, codesWithQuId) {
+  if (env.ENVIRONMENT === 'production') {
+    return callClaudeAggregateAPI(env, codesWithQuId);
+  }
+  return callGeminiAggregateAPI(env, codesWithQuId);
+}
+
+/**
+ * Run aggregate review generation in the background after the 5th submission.
+ *
+ * @param env - Worker environment bindings.
+ * @param userId - GitHub login.
+ */
+async function runAggregateReviewBackground(env, userId) {
+  try {
+    const existing = await env.DB.prepare('SELECT id FROM aggregate_reviews WHERE user_id = ?').bind(userId).first();
+    if (existing) {
+      return;
+    }
+
+    const submissions = await env.DB.prepare("SELECT qu_id, r2_code_key FROM submissions WHERE user_id = ? AND review_status = 'completed'").bind(userId).all();
+
+    const codesWithQuId = (
+      await Promise.all(
+        submissions.results.map(async (row) => {
+          const obj = await env.REVIEW_STORAGE.get(row.r2_code_key);
+          if (obj === null) return null;
+          const code = await obj.text();
+          return { quId: row.qu_id, code };
+        }),
+      )
+    ).filter((item) => item !== null);
+
+    if (codesWithQuId.length === 0) {
+      return;
+    }
+
+    const aggregateMarkdown = await generateAggregateReview(env, codesWithQuId);
+    const r2ReviewKey = `aggregate-reviews/${userId}/review.md`;
+    await env.REVIEW_STORAGE.put(r2ReviewKey, aggregateMarkdown);
+
+    const createdAt = new Date().toISOString();
+    await env.DB.prepare('INSERT INTO aggregate_reviews (user_id, r2_review_key, created_at) VALUES (?, ?, ?)').bind(userId, r2ReviewKey, createdAt).run();
+  } catch (err) {
+    console.error(`[aggregate-review] failed for ${userId}: ${err instanceof Error ? err.message : String(err)}`);
+  }
+}
+
+/**
  * Run review generation in the background: generate review, save to R2, update D1.
+ * If this is the 5th completed review for the user, also trigger aggregate review generation.
  *
  * @param env - Worker environment bindings.
  * @param userId - GitHub login.
@@ -248,6 +395,11 @@ async function runReviewBackground(env, userId, quId, code, submissionId) {
     await env.DB.prepare("UPDATE submissions SET review_status = 'completed', r2_review_key = ?, reviewed_at = ? WHERE id = ?")
       .bind(r2ReviewKey, reviewedAt, submissionId)
       .run();
+
+    const countResult = await env.DB.prepare("SELECT COUNT(*) as cnt FROM submissions WHERE user_id = ? AND review_status = 'completed'").bind(userId).first();
+    if (countResult && countResult.cnt === 5) {
+      await runAggregateReviewBackground(env, userId);
+    }
   } catch (err) {
     console.error(`[review] background review failed for ${userId}/${quId}: ${err instanceof Error ? err.message : String(err)}`);
     await env.DB.prepare("UPDATE submissions SET review_status = 'failed' WHERE id = ?").bind(submissionId).run();
