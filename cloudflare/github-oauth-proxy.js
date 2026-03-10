@@ -336,12 +336,35 @@ async function generateAggregateReview(env, codesWithQuId) {
 }
 
 /**
+ * Notify GAS Webhook that a review has been completed.
+ *
+ * @param env - Worker environment bindings.
+ * @param email - User's email address.
+ */
+async function notifyGAS(env, email) {
+  try {
+    const url = `${env.GAS_WEBHOOK_URL}?path=review-done`;
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
+    });
+    if (!res.ok) {
+      console.error(`[gas-notify] failed: ${res.status} ${await res.text()}`);
+    }
+  } catch (err) {
+    console.error(`[gas-notify] error: ${err instanceof Error ? err.message : String(err)}`);
+  }
+}
+
+/**
  * Run aggregate review generation in the background after the 5th submission.
  *
  * @param env - Worker environment bindings.
  * @param userId - GitHub login.
+ * @param email - User's email address.
  */
-async function runAggregateReviewBackground(env, userId) {
+async function runAggregateReviewBackground(env, userId, email) {
   try {
     const existing = await env.DB.prepare('SELECT id FROM aggregate_reviews WHERE user_id = ?').bind(userId).first();
     if (existing) {
@@ -371,6 +394,8 @@ async function runAggregateReviewBackground(env, userId) {
 
     const createdAt = new Date().toISOString();
     await env.DB.prepare('INSERT INTO aggregate_reviews (user_id, r2_review_key, created_at) VALUES (?, ?, ?)').bind(userId, r2ReviewKey, createdAt).run();
+
+    await notifyGAS(env, email);
   } catch (err) {
     console.error(`[aggregate-review] failed for ${userId}: ${err instanceof Error ? err.message : String(err)}`);
   }
@@ -382,11 +407,12 @@ async function runAggregateReviewBackground(env, userId) {
  *
  * @param env - Worker environment bindings.
  * @param userId - GitHub login.
+ * @param email - User's email address.
  * @param quId - Question ID.
  * @param code - Submitted code.
  * @param submissionId - D1 submission row ID.
  */
-async function runReviewBackground(env, userId, quId, code, submissionId) {
+async function runReviewBackground(env, userId, email, quId, code, submissionId) {
   const r2ReviewKey = `reviews/${userId}/${quId}/review.md`;
   try {
     const reviewMarkdown = await generateReview(env, code, quId);
@@ -396,9 +422,11 @@ async function runReviewBackground(env, userId, quId, code, submissionId) {
       .bind(r2ReviewKey, reviewedAt, submissionId)
       .run();
 
+    await notifyGAS(env, email);
+
     const countResult = await env.DB.prepare("SELECT COUNT(*) as cnt FROM submissions WHERE user_id = ? AND review_status = 'completed'").bind(userId).first();
     if (countResult && countResult.cnt === 5) {
-      await runAggregateReviewBackground(env, userId);
+      await runAggregateReviewBackground(env, userId, email);
     }
   } catch (err) {
     console.error(`[review] background review failed for ${userId}/${quId}: ${err instanceof Error ? err.message : String(err)}`);
@@ -587,7 +615,7 @@ async function handleSubmit(request, env, ctx) {
     .run();
   const submissionId = insertResult.meta.last_row_id;
 
-  ctx.waitUntil(runReviewBackground(env, login, quId, code, submissionId));
+  ctx.waitUntil(runReviewBackground(env, login, allowedEmailEntry.email, quId, code, submissionId));
 
   return new Response(JSON.stringify({ success: true }), {
     status: 200,
