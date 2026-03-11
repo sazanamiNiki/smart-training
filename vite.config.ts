@@ -16,6 +16,16 @@ export default defineConfig(({ mode }) => {
           changeOrigin: true,
           rewrite: (path) => path.replace(/^\/github-oauth/, ''),
         },
+        '/github-oauth/mypage': {
+          target: workerUrl,
+          changeOrigin: true,
+          rewrite: (path) => path.replace(/^\/github-oauth/, ''),
+        },
+        '/github-oauth/review': {
+          target: workerUrl,
+          changeOrigin: true,
+          rewrite: (path) => path.replace(/^\/github-oauth/, ''),
+        },
         '/github-oauth': {
           target: 'https://github.com',
           changeOrigin: true,

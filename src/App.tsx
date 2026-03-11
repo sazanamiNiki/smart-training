@@ -7,6 +7,7 @@ import styles from './App.module.css';
 import EditorPanel from './components/Editor/EditorPanel';
 import { useEditor } from './components/Editor/hooks/useEditor';
 import HeaderBar from './components/Header/HeaderBar';
+import MyPage from './components/MyPage/MyPage';
 import ResultsPanel from './components/ResultsPanel/ResultsPanel';
 import { GitHubAuthProvider } from './contexts/GitHubAuthContext';
 import { usePersistedState } from './hooks/usePersistedState';
@@ -24,12 +25,15 @@ import {
 import { applyCssVariables, createAppTheme } from './theme';
 import './theme.css';
 
+type Page = 'main' | 'mypage';
+
 type AppContentProps = {
   colorMode: 'dark' | 'light';
   onColorModeChange: (mode: 'dark' | 'light') => void;
 };
 
 function AppContent({ colorMode, onColorModeChange }: AppContentProps) {
+  const [page, setPage] = useState<Page>('main');
   const [selectedId, setSelectedId] = useState<string>(() => loadSelectedProblemId() ?? problems[0].id);
   const [layoutFlipped, setLayoutFlipped] = usePersistedState(loadLayoutFlipped, saveLayoutFlipped);
   const [editorFontSize, setEditorFontSize] = usePersistedState(loadEditorFontSize, saveEditorFontSize);
@@ -59,26 +63,35 @@ function AppContent({ colorMode, onColorModeChange }: AppContentProps) {
         onEditorFontSizeChange={setEditorFontSize}
         colorMode={colorMode}
         onColorModeChange={handleColorModeChange}
+        page={page}
+        onNavigateMyPage={() => setPage('mypage')}
+        onNavigateHome={() => setPage('main')}
       />
-      <div className={layoutFlipped ? styles.panelsFlipped : styles.panels}>
-        <div className={layoutFlipped ? styles.editorPaneFlipped : styles.editorPane}>
-          <EditorPanel
-            problem={problem}
-            code={code}
-            onCodeChange={setCode}
-            editorFontSize={editorFontSize}
-            run={run}
-            running={running}
-            execute={execute}
-            executing={executing}
-            consoleLogs={consoleLogs}
-            clearConsoleLogs={clearConsoleLogs}
-          />
+      {page === 'mypage' ? (
+        <div className={styles.myPagePane}>
+          <MyPage />
         </div>
-        <div className={styles.resultsPane}>
-          <ResultsPanel problem={problem} results={results} running={running} code={code} />
+      ) : (
+        <div className={layoutFlipped ? styles.panelsFlipped : styles.panels}>
+          <div className={layoutFlipped ? styles.editorPaneFlipped : styles.editorPane}>
+            <EditorPanel
+              problem={problem}
+              code={code}
+              onCodeChange={setCode}
+              editorFontSize={editorFontSize}
+              run={run}
+              running={running}
+              execute={execute}
+              executing={executing}
+              consoleLogs={consoleLogs}
+              clearConsoleLogs={clearConsoleLogs}
+            />
+          </div>
+          <div className={styles.resultsPane}>
+            <ResultsPanel problem={problem} results={results} running={running} code={code} />
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

@@ -1,0 +1,62 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  background-color: var(--bg-default);
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 24px;
+  overflow-y: auto;
+  height: 100%;
+}
+
+.heading {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+  flex-shrink: 0;
+}
+
+.sectionLabel {
+  flex-shrink: 0;
+}
+
+.aggregateSection {
+  flex-shrink: 0;
+}
+
+.centered {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  gap: 16px;
+  background-color: var(--bg-default);
+}
+
+.deviceFlow {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.authCode {
+  font-family: var(--font-mono);
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  color: var(--color-primary);
+}
+
+.pendingRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}

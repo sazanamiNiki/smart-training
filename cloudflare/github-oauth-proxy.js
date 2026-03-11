@@ -36,7 +36,7 @@ const AGGREGATE_REVIEW_SYSTEM_PROMPT = `あなたはTypeScriptのコードレビ
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': ALLOWED_ORIGIN,
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type, Accept, Authorization',
 };
 
@@ -435,6 +435,130 @@ async function runReviewBackground(env, userId, email, quId, code, submissionId)
 }
 
 /**
+ * Authenticate a request using the Authorization header and return GitHub user data.
+ *
+ * @param request - Incoming Request.
+ * @returns GitHub user object with `login` and `id`, or null if authentication fails.
+ */
+async function authenticateUser(request) {
+  const authHeader = request.headers.get('Authorization') ?? '';
+  const userToken = authHeader.replace(/^Bearer\s+/, '');
+  if (!userToken) return null;
+
+  const ghHeaders = {
+    Authorization: `Bearer ${userToken}`,
+    Accept: 'application/vnd.github+json',
+    'User-Agent': 'smart-training-worker',
+    'X-GitHub-Api-Version': '2022-11-28',
+  };
+
+  const userRes = await fetch('https://api.github.com/user', { headers: ghHeaders });
+  if (!userRes.ok) return null;
+
+  return userRes.json();
+}
+
+/**
+ * Handle GET /mypage: return submission list and aggregate review for authenticated user.
+ *
+ * @param request - Incoming Request.
+ * @param env - Cloudflare Worker environment bindings.
+ * @returns JSON Response with MyPageResponse shape.
+ */
+async function handleMyPage(request, env) {
+  const userData = await authenticateUser(request);
+  if (!userData) {
+    return new Response(JSON.stringify({ error: '認証トークンが無効です。' }), {
+      status: 401,
+      headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
+    });
+  }
+
+  const userId = userData.login;
+
+  const [submissionsResult, aggregateResult] = await Promise.all([
+    env.DB.prepare(
+      'SELECT id, user_id, email, qu_id, r2_review_key, review_status, submitted_at, reviewed_at FROM submissions WHERE user_id = ? ORDER BY submitted_at DESC',
+    )
+      .bind(userId)
+      .all(),
+    env.DB.prepare('SELECT id, user_id, r2_review_key, created_at FROM aggregate_reviews WHERE user_id = ?').bind(userId).first(),
+  ]);
+
+  return new Response(
+    JSON.stringify({
+      submissions: submissionsResult.results,
+      aggregateReview: aggregateResult ?? null,
+    }),
+    {
+      status: 200,
+      headers: { 'Content-Type': 'application/json', ...CORS_HEADERS, ...SECURITY_HEADERS },
+    },
+  );
+}
+
+/**
+ * Handle GET /review: return review markdown for a specific submission.
+ * Use query param `type=aggregate` to retrieve the aggregate review.
+ *
+ * @param request - Incoming Request.
+ * @param env - Cloudflare Worker environment bindings.
+ * @returns Markdown text Response.
+ */
+async function handleReview(request, env) {
+  const userData = await authenticateUser(request);
+  if (!userData) {
+    return new Response(JSON.stringify({ error: '認証トークンが無効です。' }), {
+      status: 401,
+      headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
+    });
+  }
+
+  const userId = userData.login;
+  const url = new URL(request.url);
+  const type = url.searchParams.get('type');
+  const quId = url.searchParams.get('quId');
+
+  if (type === 'aggregate') {
+    const r2Key = `aggregate-reviews/${userId}/review.md`;
+    const obj = await env.REVIEW_STORAGE.get(r2Key);
+    if (obj === null) {
+      return new Response('Not found', { status: 404, headers: CORS_HEADERS });
+    }
+    const text = await obj.text();
+    return new Response(text, {
+      status: 200,
+      headers: { 'Content-Type': 'text/markdown; charset=utf-8', ...CORS_HEADERS, ...SECURITY_HEADERS },
+    });
+  }
+
+  if (!quId || typeof quId !== 'string' || !/^qu\d+$/.test(quId)) {
+    return new Response(JSON.stringify({ error: 'quId の形式が不正です。' }), {
+      status: 400,
+      headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
+    });
+  }
+
+  const submission = await env.DB.prepare("SELECT r2_review_key FROM submissions WHERE user_id = ? AND qu_id = ? AND review_status = 'completed'")
+    .bind(userId, quId)
+    .first();
+
+  if (!submission) {
+    return new Response('Not found', { status: 404, headers: CORS_HEADERS });
+  }
+
+  const obj = await env.REVIEW_STORAGE.get(submission.r2_review_key);
+  if (obj === null) {
+    return new Response('Not found', { status: 404, headers: CORS_HEADERS });
+  }
+  const text = await obj.text();
+  return new Response(text, {
+    status: 200,
+    headers: { 'Content-Type': 'text/markdown; charset=utf-8', ...CORS_HEADERS, ...SECURITY_HEADERS },
+  });
+}
+
+/**
  * Handle POST /submit: verify email domain, then commit files via GitHub App.
  *
  * @param request - Incoming Request.
@@ -633,6 +757,14 @@ export default {
 
     if (url.pathname === '/submit' && request.method === 'POST') {
       return handleSubmit(request, env, ctx);
+    }
+
+    if (url.pathname === '/mypage' && request.method === 'GET') {
+      return handleMyPage(request, env);
+    }
+
+    if (url.pathname === '/review' && request.method === 'GET') {
+      return handleReview(request, env);
     }
 
     if (!PROXY_PATHS.includes(url.pathname)) {
