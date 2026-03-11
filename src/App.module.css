@@ -36,3 +36,8 @@
   height: 100%;
   overflow: hidden;
 }
+
+.myPagePane {
+  flex: 1;
+  overflow: hidden;
+}
