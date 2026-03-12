@@ -1,5 +1,6 @@
 import { CssBaseline } from '@mui/material';
 import { ThemeProvider } from '@mui/material/styles';
+import { Route, Routes, useNavigate } from 'react-router-dom';
 
 import { useMemo, useState } from 'react';
 
@@ -25,23 +26,28 @@ import {
 import { applyCssVariables, createAppTheme } from './theme';
 import './theme.css';
 
-type Page = 'main' | 'mypage';
-
 type AppContentProps = {
   colorMode: 'dark' | 'light';
   onColorModeChange: (mode: 'dark' | 'light') => void;
 };
 
-function AppContent({ colorMode, onColorModeChange }: AppContentProps) {
-  const [page, setPage] = useState<Page>('main');
+function MainPage({
+  editorFontSize,
+  layoutFlipped,
+  setLayoutFlipped,
+  setEditorFontSize,
+  colorMode,
+  onColorModeChange,
+}: {
+  editorFontSize: number;
+  layoutFlipped: boolean;
+  setLayoutFlipped: (v: boolean) => void;
+  setEditorFontSize: (v: number) => void;
+  colorMode: 'dark' | 'light';
+  onColorModeChange: (mode: 'dark' | 'light') => void;
+}) {
+  const navigate = useNavigate();
   const [selectedId, setSelectedId] = useState<string>(() => loadSelectedProblemId() ?? problems[0].id);
-  const [layoutFlipped, setLayoutFlipped] = usePersistedState(loadLayoutFlipped, saveLayoutFlipped);
-  const [editorFontSize, setEditorFontSize] = usePersistedState(loadEditorFontSize, saveEditorFontSize);
-
-  const handleColorModeChange = (mode: 'dark' | 'light') => {
-    onColorModeChange(mode);
-    saveColorMode(mode);
-  };
 
   const problem = problems.find((p) => p.id === selectedId) ?? problems[0];
   const { code, setCode, results, running, run, consoleLogs, executing, execute, clearConsoleLogs } = useEditor(problem);
@@ -62,37 +68,96 @@ function AppContent({ colorMode, onColorModeChange }: AppContentProps) {
         editorFontSize={editorFontSize}
         onEditorFontSizeChange={setEditorFontSize}
         colorMode={colorMode}
-        onColorModeChange={handleColorModeChange}
-        page={page}
-        onNavigateMyPage={() => setPage('mypage')}
-        onNavigateHome={() => setPage('main')}
+        onColorModeChange={onColorModeChange}
+        page="main"
+        onNavigateMyPage={() => navigate('/mypage')}
+        onNavigateHome={() => navigate('/')}
       />
-      {page === 'mypage' ? (
-        <div className={styles.myPagePane}>
-          <MyPage />
+      <div className={layoutFlipped ? styles.panelsFlipped : styles.panels}>
+        <div className={layoutFlipped ? styles.editorPaneFlipped : styles.editorPane}>
+          <EditorPanel
+            problem={problem}
+            code={code}
+            onCodeChange={setCode}
+            editorFontSize={editorFontSize}
+            run={run}
+            running={running}
+            execute={execute}
+            executing={executing}
+            consoleLogs={consoleLogs}
+            clearConsoleLogs={clearConsoleLogs}
+          />
         </div>
-      ) : (
-        <div className={layoutFlipped ? styles.panelsFlipped : styles.panels}>
-          <div className={layoutFlipped ? styles.editorPaneFlipped : styles.editorPane}>
-            <EditorPanel
-              problem={problem}
-              code={code}
-              onCodeChange={setCode}
-              editorFontSize={editorFontSize}
-              run={run}
-              running={running}
-              execute={execute}
-              executing={executing}
-              consoleLogs={consoleLogs}
-              clearConsoleLogs={clearConsoleLogs}
-            />
-          </div>
-          <div className={styles.resultsPane}>
-            <ResultsPanel problem={problem} results={results} running={running} code={code} />
-          </div>
+        <div className={styles.resultsPane}>
+          <ResultsPanel problem={problem} results={results} running={running} code={code} />
         </div>
-      )}
+      </div>
     </div>
+  );
+}
+
+function MyPageRoute({
+  editorFontSize,
+  layoutFlipped,
+  setLayoutFlipped,
+  setEditorFontSize,
+  colorMode,
+  onColorModeChange,
+}: {
+  editorFontSize: number;
+  layoutFlipped: boolean;
+  setLayoutFlipped: (v: boolean) => void;
+  setEditorFontSize: (v: number) => void;
+  colorMode: 'dark' | 'light';
+  onColorModeChange: (mode: 'dark' | 'light') => void;
+}) {
+  const navigate = useNavigate();
+  return (
+    <div className={styles.root}>
+      <HeaderBar
+        problems={problems}
+        selectedId={problems[0].id}
+        onProblemChange={() => {}}
+        layoutFlipped={layoutFlipped}
+        onLayoutFlip={setLayoutFlipped}
+        editorFontSize={editorFontSize}
+        onEditorFontSizeChange={setEditorFontSize}
+        colorMode={colorMode}
+        onColorModeChange={onColorModeChange}
+        page="mypage"
+        onNavigateMyPage={() => navigate('/mypage')}
+        onNavigateHome={() => navigate('/')}
+      />
+      <div className={styles.myPagePane}>
+        <MyPage />
+      </div>
+    </div>
+  );
+}
+
+function AppContent({ colorMode, onColorModeChange }: AppContentProps) {
+  const [layoutFlipped, setLayoutFlipped] = usePersistedState(loadLayoutFlipped, saveLayoutFlipped);
+  const [editorFontSize, setEditorFontSize] = usePersistedState(loadEditorFontSize, saveEditorFontSize);
+
+  const handleColorModeChange = (mode: 'dark' | 'light') => {
+    onColorModeChange(mode);
+    saveColorMode(mode);
+  };
+
+  const sharedProps = {
+    editorFontSize,
+    layoutFlipped,
+    setLayoutFlipped,
+    setEditorFontSize,
+    colorMode,
+    onColorModeChange: handleColorModeChange,
+  };
+
+  return (
+    <Routes>
+      <Route path="/mypage" element={<MyPageRoute {...sharedProps} />} />
+      <Route path="*" element={<MainPage {...sharedProps} />} />
+    </Routes>
   );
 }
 
