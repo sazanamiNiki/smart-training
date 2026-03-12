@@ -1,5 +1,6 @@
 import { CssBaseline } from '@mui/material';
 import { ThemeProvider } from '@mui/material/styles';
+import { Route, Routes, useNavigate } from 'react-router-dom';
 
 import { useMemo, useState } from 'react';
 
@@ -7,6 +8,7 @@ import styles from './App.module.css';
 import EditorPanel from './components/Editor/EditorPanel';
 import { useEditor } from './components/Editor/hooks/useEditor';
 import HeaderBar from './components/Header/HeaderBar';
+import MyPage from './components/MyPage/MyPage';
 import ResultsPanel from './components/ResultsPanel/ResultsPanel';
 import { GitHubAuthProvider } from './contexts/GitHubAuthContext';
 import { usePersistedState } from './hooks/usePersistedState';
@@ -29,15 +31,23 @@ type AppContentProps = {
   onColorModeChange: (mode: 'dark' | 'light') => void;
 };
 
-function AppContent({ colorMode, onColorModeChange }: AppContentProps) {
+function MainPage({
+  editorFontSize,
+  layoutFlipped,
+  setLayoutFlipped,
+  setEditorFontSize,
+  colorMode,
+  onColorModeChange,
+}: {
+  editorFontSize: number;
+  layoutFlipped: boolean;
+  setLayoutFlipped: (v: boolean) => void;
+  setEditorFontSize: (v: number) => void;
+  colorMode: 'dark' | 'light';
+  onColorModeChange: (mode: 'dark' | 'light') => void;
+}) {
+  const navigate = useNavigate();
   const [selectedId, setSelectedId] = useState<string>(() => loadSelectedProblemId() ?? problems[0].id);
-  const [layoutFlipped, setLayoutFlipped] = usePersistedState(loadLayoutFlipped, saveLayoutFlipped);
-  const [editorFontSize, setEditorFontSize] = usePersistedState(loadEditorFontSize, saveEditorFontSize);
-
-  const handleColorModeChange = (mode: 'dark' | 'light') => {
-    onColorModeChange(mode);
-    saveColorMode(mode);
-  };
 
   const problem = problems.find((p) => p.id === selectedId) ?? problems[0];
   const { code, setCode, results, running, run, consoleLogs, executing, execute, clearConsoleLogs } = useEditor(problem);
@@ -58,7 +68,10 @@ function AppContent({ colorMode, onColorModeChange }: AppContentProps) {
         editorFontSize={editorFontSize}
         onEditorFontSizeChange={setEditorFontSize}
         colorMode={colorMode}
-        onColorModeChange={handleColorModeChange}
+        onColorModeChange={onColorModeChange}
+        page="main"
+        onNavigateMyPage={() => navigate('/mypage')}
+        onNavigateHome={() => navigate('/')}
       />
       <div className={layoutFlipped ? styles.panelsFlipped : styles.panels}>
         <div className={layoutFlipped ? styles.editorPaneFlipped : styles.editorPane}>
@@ -80,6 +93,71 @@ function AppContent({ colorMode, onColorModeChange }: AppContentProps) {
         </div>
       </div>
     </div>
+  );
+}
+
+function MyPageRoute({
+  editorFontSize,
+  layoutFlipped,
+  setLayoutFlipped,
+  setEditorFontSize,
+  colorMode,
+  onColorModeChange,
+}: {
+  editorFontSize: number;
+  layoutFlipped: boolean;
+  setLayoutFlipped: (v: boolean) => void;
+  setEditorFontSize: (v: number) => void;
+  colorMode: 'dark' | 'light';
+  onColorModeChange: (mode: 'dark' | 'light') => void;
+}) {
+  const navigate = useNavigate();
+  return (
+    <div className={styles.root}>
+      <HeaderBar
+        problems={problems}
+        selectedId={problems[0].id}
+        onProblemChange={() => {}}
+        layoutFlipped={layoutFlipped}
+        onLayoutFlip={setLayoutFlipped}
+        editorFontSize={editorFontSize}
+        onEditorFontSizeChange={setEditorFontSize}
+        colorMode={colorMode}
+        onColorModeChange={onColorModeChange}
+        page="mypage"
+        onNavigateMyPage={() => navigate('/mypage')}
+        onNavigateHome={() => navigate('/')}
+      />
+      <div className={styles.myPagePane}>
+        <MyPage />
+      </div>
+    </div>
+  );
+}
+
+function AppContent({ colorMode, onColorModeChange }: AppContentProps) {
+  const [layoutFlipped, setLayoutFlipped] = usePersistedState(loadLayoutFlipped, saveLayoutFlipped);
+  const [editorFontSize, setEditorFontSize] = usePersistedState(loadEditorFontSize, saveEditorFontSize);
+
+  const handleColorModeChange = (mode: 'dark' | 'light') => {
+    onColorModeChange(mode);
+    saveColorMode(mode);
+  };
+
+  const sharedProps = {
+    editorFontSize,
+    layoutFlipped,
+    setLayoutFlipped,
+    setEditorFontSize,
+    colorMode,
+    onColorModeChange: handleColorModeChange,
+  };
+
+  return (
+    <Routes>
+      <Route path="/mypage" element={<MyPageRoute {...sharedProps} />} />
+      <Route path="*" element={<MainPage {...sharedProps} />} />
+    </Routes>
   );
 }
 
