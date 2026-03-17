@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Redirecting...</title>
+    <script>
+      (function () {
+        var segments = location.pathname.split('/');
+        var basePath;
+        if (segments.length > 2 && segments[2] === 'dev') {
+          basePath = '/' + segments[1] + '/dev/';
+        } else {
+          basePath = '/' + segments[1] + '/';
+        }
+        sessionStorage.setItem(
+          'spa-redirect',
+          location.pathname + location.search + location.hash
+        );
+        location.replace(location.origin + basePath);
+      })();
+    </script>
+  </head>
+  <body></body>
+</html>
