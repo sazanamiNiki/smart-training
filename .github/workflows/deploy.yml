@@ -6,6 +6,15 @@ on:
       - main
       - develop
       - add-answers
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Deploy target branch'
+        required: true
+        type: choice
+        options:
+          - develop
+          - main
 
 permissions:
   contents: write
