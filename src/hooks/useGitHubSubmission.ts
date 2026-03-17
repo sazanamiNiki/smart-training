@@ -5,7 +5,8 @@ import { useCallback, useEffect, useState } from 'react';
 import { clearGitHubToken, loadGitHubToken, loadGitHubUser, saveGitHubToken, saveGitHubUser } from '../services/storage.service';
 
 const CLIENT_ID = import.meta.env.VITE_GITHUB_CLIENT_ID as string;
-const GITHUB_OAUTH_BASE = import.meta.env.DEV ? '/github-oauth' : (import.meta.env.VITE_GITHUB_PROXY_URL as string);
+const OAUTH_BASE = import.meta.env.DEV ? '/oauth-proxy' : (import.meta.env.VITE_GITHUB_PROXY_URL as string);
+const SUBMIT_BASE = import.meta.env.DEV ? '/submit-api' : (import.meta.env.VITE_SUBMIT_API_URL as string);
 
 type AuthStatus = 'idle' | 'pending' | 'authenticated' | 'error';
 
@@ -54,7 +55,7 @@ async function pollForToken(deviceCode: string, interval: number, expiresIn: num
   while (Date.now() < deadline) {
     await new Promise((r) => setTimeout(r, currentInterval * 1000));
 
-    const res = await fetch(`${GITHUB_OAUTH_BASE}/login/oauth/access_token`, {
+    const res = await fetch(`${OAUTH_BASE}/login/oauth/access_token`, {
       method: 'POST',
       headers: { Accept: 'application/json', 'Content-Type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams({
@@ -105,7 +106,7 @@ export function useGitHubSubmission(): UseGitHubSubmissionReturn {
     setAuthStatus('pending');
     setSubmitError(null);
     try {
-      const res = await fetch(`${GITHUB_OAUTH_BASE}/login/device/code`, {
+      const res = await fetch(`${OAUTH_BASE}/login/device/code`, {
         method: 'POST',
         headers: {
           Accept: 'application/json',
@@ -146,7 +147,7 @@ export function useGitHubSubmission(): UseGitHubSubmissionReturn {
     setSubmitting(true);
     setSubmitError(null);
     try {
-      const res = await fetch(`${GITHUB_OAUTH_BASE}/submit`, {
+      const res = await fetch(`${SUBMIT_BASE}/submit`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

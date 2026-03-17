@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { loadGitHubToken } from '../services/storage.service';
 import type { AggregateReview, MyPageResponse, Submission } from '../types';
 
-const GITHUB_OAUTH_BASE = import.meta.env.DEV ? '/github-oauth' : (import.meta.env.VITE_GITHUB_PROXY_URL as string);
+const MYPAGE_BASE = import.meta.env.DEV ? '/mypage-api' : (import.meta.env.VITE_MYPAGE_API_URL as string);
 const POLL_INTERVAL_MS = 10_000;
 
 export interface UseMyPageReturn {
@@ -39,7 +39,7 @@ export function useMyPage(): UseMyPageReturn {
     const token = loadGitHubToken();
     if (!token) return null;
 
-    const res = await fetch(`${GITHUB_OAUTH_BASE}/mypage`, {
+    const res = await fetch(`${MYPAGE_BASE}/mypage`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     if (!res.ok) {
@@ -95,7 +95,7 @@ export function useMyPage(): UseMyPageReturn {
     const token = loadGitHubToken();
     if (!token) throw new Error('認証が必要です。');
 
-    const res = await fetch(`${GITHUB_OAUTH_BASE}/review?quId=${encodeURIComponent(quId)}`, {
+    const res = await fetch(`${MYPAGE_BASE}/review?quId=${encodeURIComponent(quId)}`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     if (!res.ok) {
@@ -109,7 +109,7 @@ export function useMyPage(): UseMyPageReturn {
     const token = loadGitHubToken();
     if (!token) throw new Error('認証が必要です。');
 
-    const res = await fetch(`${GITHUB_OAUTH_BASE}/review?type=aggregate`, {
+    const res = await fetch(`${MYPAGE_BASE}/review?type=aggregate`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     if (!res.ok) {

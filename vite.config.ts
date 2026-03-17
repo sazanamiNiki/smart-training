@@ -11,25 +11,20 @@ export default defineConfig(({ mode }) => {
     base: env.BASE_PATH || process.env.BASE_PATH || '/',
     server: {
       proxy: {
-        '/github-oauth/submit': {
+        '/submit-api': {
           target: workerUrl,
           changeOrigin: true,
-          rewrite: (path) => path.replace(/^\/github-oauth/, ''),
+          rewrite: (path) => path.replace(/^\/submit-api/, ''),
         },
-        '/github-oauth/mypage': {
+        '/mypage-api': {
           target: workerUrl,
           changeOrigin: true,
-          rewrite: (path) => path.replace(/^\/github-oauth/, ''),
+          rewrite: (path) => path.replace(/^\/mypage-api/, ''),
         },
-        '/github-oauth/review': {
-          target: workerUrl,
-          changeOrigin: true,
-          rewrite: (path) => path.replace(/^\/github-oauth/, ''),
-        },
-        '/github-oauth': {
+        '/oauth-proxy': {
           target: 'https://github.com',
           changeOrigin: true,
-          rewrite: (path) => path.replace(/^\/github-oauth/, ''),
+          rewrite: (path) => path.replace(/^\/oauth-proxy/, ''),
         },
       },
     },
