@@ -4,7 +4,7 @@ export interface Env {
   REVIEW_STORAGE: R2Bucket;
   // 'local' | 'dev' | 'production'
   ENVIRONMENT: string;
-  // dev環境以上で使用
+  // production環境で使用
   ANTHROPIC_API_KEY: string;
   // local環境で使用
   GEMINI_API_KEY: string;

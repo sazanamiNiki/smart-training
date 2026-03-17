@@ -19,6 +19,9 @@ type Props = {
   onEditorFontSizeChange: (size: number) => void;
   colorMode: 'dark' | 'light';
   onColorModeChange: (mode: 'dark' | 'light') => void;
+  page: 'main' | 'mypage';
+  onNavigateMyPage: () => void;
+  onNavigateHome: () => void;
 };
 
 /**
@@ -33,6 +36,9 @@ type Props = {
  * @param onEditorFontSizeChange - Callback when the editor font size changes.
  * @param colorMode - Current color mode ('dark' or 'light').
  * @param onColorModeChange - Callback when the color mode changes.
+ * @param page - Currently displayed page ('main' or 'mypage').
+ * @param onNavigateMyPage - Callback to navigate to the mypage.
+ * @param onNavigateHome - Callback to navigate back to the main page.
  */
 export default function HeaderBar({
   problems,
@@ -44,6 +50,9 @@ export default function HeaderBar({
   onEditorFontSizeChange,
   colorMode,
   onColorModeChange,
+  page,
+  onNavigateMyPage,
+  onNavigateHome,
 }: Props) {
   const { githubUser } = useGitHubAuth();
   const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
@@ -89,6 +98,15 @@ export default function HeaderBar({
             <Typography variant="body2" color="text.secondary">
               {githubUser}
             </Typography>
+          )}
+          {page === 'mypage' ? (
+            <button className={styles.navLink} onClick={onNavigateHome}>
+              問題に戻る
+            </button>
+          ) : (
+            <button className={styles.navLink} onClick={onNavigateMyPage}>
+              マイページ
+            </button>
           )}
           <IconButton size="small" onClick={openMenu} aria-label="メニューを開く">
             <MoreVertIcon fontSize="small" />

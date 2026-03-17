@@ -76,3 +76,31 @@ export interface ConsoleResultMessage {
 
 export type WorkerRequest = RunMessage | ExecuteMessage;
 export type WorkerResponse = ResultMessage | ErrorMessage | ConsoleResultMessage;
+
+export interface Submission {
+  id: number;
+  user_id: string;
+  email: string;
+  qu_id: string;
+  r2_code_key: string;
+  r2_review_key: string | null;
+  review_status: 'pending' | 'completed' | 'failed';
+  submitted_at: string;
+  reviewed_at: string | null;
+}
+
+export interface AggregateReview {
+  id: number;
+  user_id: string;
+  r2_review_key: string;
+  created_at: string;
+}
+
+export interface MyPageResponse {
+  submissions: Submission[];
+  aggregateReview: AggregateReview | null;
+}
+
+export interface ReviewResponse {
+  markdown: string;
+}

@@ -22,3 +22,9 @@
 ## CommunityAnswers
 - `CommunityAnswers/CommunityAnswers` - 問題ごとのコミュニティ回答一覧を表示するパネル
 - `CommunityAnswers/AnswerItem` - 1件の回答（コード・解説トグル）を表示するコンポーネント
+
+## MyPage
+- `MyPage/MyPage` - マイページメインコンポーネント（未認証時の認証UIを含む）
+- `MyPage/SubmissionList` - 提出履歴をテーブル形式で表示するコンポーネント
+- `MyPage/ReviewDetail` - 個別レビューMarkdownを表示するコンポーネント
+- `MyPage/AggregateReviewPanel` - 集計レビューをカードスタイルで表示するコンポーネント
