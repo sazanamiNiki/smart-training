@@ -36,7 +36,7 @@ export const AGGREGATE_REVIEW_SYSTEM_PROMPT = `あなたはTypeScriptのコー�
 
 export const CORS_HEADERS = {
   'Access-Control-Allow-Origin': ALLOWED_ORIGIN,
-  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+  'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type, Accept, Authorization',
 };
 

@@ -10,6 +10,8 @@ export interface Env {
   GEMINI_API_KEY: string;
   // 全環境で使用
   GAS_WEBHOOK_URL: string;
+  // テスト時にAIレビューをモック化（truthy で有効）
+  MOCK_AI?: string;
 }
 
 /** D1 submissions table record. */

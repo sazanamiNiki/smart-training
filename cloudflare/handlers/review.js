@@ -10,7 +10,7 @@ import { CORS_HEADERS, SECURITY_HEADERS } from '../lib/constants.js';
  * @returns Markdown text Response.
  */
 export async function handleReview(request, env) {
-  const userData = await authenticateUser(request);
+  const userData = await authenticateUser(request, env);
   if (!userData) {
     return new Response(JSON.stringify({ error: '認証トークンが無効です。' }), {
       status: 401,

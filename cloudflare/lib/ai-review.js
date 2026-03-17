@@ -82,6 +82,9 @@ async function callClaudeAPI(env, code, quId) {
  * @throws {Error} If the API request fails.
  */
 export async function generateReview(env, code, quId) {
+  if (env.MOCK_AI) {
+    return `## コード品質\nモックレビュー: 問題 ${quId} のコードは適切に実装されています。\n\n## 改善点\n特になし。\n\n## 良い点\n簡潔で読みやすい実装です。`;
+  }
   if (env.ENVIRONMENT === 'production') {
     return callClaudeAPI(env, code, quId);
   }
@@ -169,6 +172,9 @@ async function callClaudeAggregateAPI(env, codesWithQuId) {
  * @throws {Error} If the API request fails.
  */
 export async function generateAggregateReview(env, codesWithQuId) {
+  if (env.MOCK_AI) {
+    return `## 全体的なコードスタイル\nモック集計レビュー: 一貫したコーディングスタイルです。\n\n## 強み\n問題を正確に理解し解決しています。\n\n## 改善が必要な点\n特になし。\n\n## 学習アドバイス\nこの調子で学習を続けてください。`;
+  }
   if (env.ENVIRONMENT === 'production') {
     return callClaudeAggregateAPI(env, codesWithQuId);
   }
