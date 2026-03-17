@@ -21,11 +21,20 @@ export default defineConfig({
     },
   ],
   webServer: !process.env.BASE_URL
-    ? {
-        command: 'npm run dev',
-        url: 'http://localhost:5173',
-        reuseExistingServer: !process.env.CI,
-        timeout: 120000,
-      }
+    ? [
+        {
+          command: 'npm run dev',
+          url: 'http://localhost:5173',
+          reuseExistingServer: !process.env.CI,
+          timeout: 120000,
+        },
+        {
+          command: 'npx wrangler dev --port 8787 --var MOCK_AI:true',
+          cwd: './cloudflare',
+          url: 'http://localhost:8787/health',
+          reuseExistingServer: !process.env.CI,
+          timeout: 120000,
+        },
+      ]
     : undefined,
 });

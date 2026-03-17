@@ -1,6 +1,7 @@
 import { handleMyPage } from './handlers/mypage.js';
 import { handleReview } from './handlers/review.js';
 import { handleSubmit } from './handlers/submit.js';
+import { handleTestSubmit, handleTestSubmitDelete } from './handlers/test-submit.js';
 import { CORS_HEADERS, PROXY_PATHS } from './lib/constants.js';
 
 export default {
@@ -10,6 +11,10 @@ export default {
     }
 
     const url = new URL(request.url);
+
+    if (url.pathname === '/health') {
+      return new Response('OK', { status: 200 });
+    }
 
     if (url.pathname === '/submit' && request.method === 'POST') {
       return handleSubmit(request, env, ctx);
@@ -21,6 +26,14 @@ export default {
 
     if (url.pathname === '/review' && request.method === 'GET') {
       return handleReview(request, env);
+    }
+
+    if (url.pathname === '/test-submit' && request.method === 'POST') {
+      return handleTestSubmit(request, env, ctx);
+    }
+
+    if (url.pathname === '/test-submit' && request.method === 'DELETE') {
+      return handleTestSubmitDelete(request, env);
     }
 
     if (!PROXY_PATHS.includes(url.pathname)) {

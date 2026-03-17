@@ -21,6 +21,11 @@ export default defineConfig(({ mode }) => {
           changeOrigin: true,
           rewrite: (path) => path.replace(/^\/mypage-api/, ''),
         },
+        '/test-api': {
+          target: workerUrl,
+          changeOrigin: true,
+          rewrite: (path) => path.replace(/^\/test-api/, ''),
+        },
         '/oauth-proxy': {
           target: 'https://github.com',
           changeOrigin: true,
