@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { loadGitHubToken } from '../services/storage.service';
 import type { AggregateReview, MyPageResponse, Submission } from '../types';
 
-const MYPAGE_BASE = import.meta.env.DEV ? '/mypage-api' : (import.meta.env.VITE_MYPAGE_API_URL as string);
+const MYPAGE_BASE = import.meta.env.DEV ? '/mypage-api' : (import.meta.env.VITE_GITHUB_PROXY_URL as string);
 const POLL_INTERVAL_MS = 10_000;
 
 export interface UseMyPageReturn {
