@@ -6,7 +6,7 @@ import { clearGitHubToken, loadGitHubToken, loadGitHubUser, saveGitHubToken, sav
 
 const CLIENT_ID = import.meta.env.VITE_GITHUB_CLIENT_ID as string;
 const OAUTH_BASE = import.meta.env.DEV ? '/oauth-proxy' : (import.meta.env.VITE_GITHUB_PROXY_URL as string);
-const SUBMIT_BASE = import.meta.env.DEV ? '/submit-api' : (import.meta.env.VITE_SUBMIT_API_URL as string);
+const SUBMIT_BASE = import.meta.env.DEV ? '/submit-api' : (import.meta.env.VITE_GITHUB_PROXY_URL as string);
 
 type AuthStatus = 'idle' | 'pending' | 'authenticated' | 'error';
 
