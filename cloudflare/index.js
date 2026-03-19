@@ -10,52 +10,60 @@ export default {
       return new Response(null, { status: 204, headers: CORS_HEADERS });
     }
 
-    const url = new URL(request.url);
+    try {
+      const url = new URL(request.url);
 
-    if (url.pathname === '/health') {
-      return new Response('OK', { status: 200 });
+      if (url.pathname === '/health') {
+        return new Response('OK', { status: 200 });
+      }
+
+      if (url.pathname === '/submit' && request.method === 'POST') {
+        return handleSubmit(request, env, ctx);
+      }
+
+      if (url.pathname === '/mypage' && request.method === 'GET') {
+        return handleMyPage(request, env);
+      }
+
+      if (url.pathname === '/review' && request.method === 'GET') {
+        return handleReview(request, env);
+      }
+
+      if (url.pathname === '/test-submit' && request.method === 'POST') {
+        return handleTestSubmit(request, env, ctx);
+      }
+
+      if (url.pathname === '/test-submit' && request.method === 'DELETE') {
+        return handleTestSubmitDelete(request, env);
+      }
+
+      if (!PROXY_PATHS.includes(url.pathname)) {
+        return new Response('Not Found', { status: 404, headers: CORS_HEADERS });
+      }
+
+      const target = new URL(url.pathname + url.search, 'https://github.com');
+      const proxied = await fetch(
+        new Request(target, {
+          method: request.method,
+          headers: request.headers,
+          body: request.body,
+        }),
+      );
+
+      const response = new Response(proxied.body, {
+        status: proxied.status,
+        headers: proxied.headers,
+      });
+
+      Object.entries(CORS_HEADERS).forEach(([k, v]) => response.headers.set(k, v));
+
+      return response;
+    } catch (err) {
+      console.error(err);
+      return new Response(JSON.stringify({ error: 'Internal Server Error' }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
+      });
     }
-
-    if (url.pathname === '/submit' && request.method === 'POST') {
-      return handleSubmit(request, env, ctx);
-    }
-
-    if (url.pathname === '/mypage' && request.method === 'GET') {
-      return handleMyPage(request, env);
-    }
-
-    if (url.pathname === '/review' && request.method === 'GET') {
-      return handleReview(request, env);
-    }
-
-    if (url.pathname === '/test-submit' && request.method === 'POST') {
-      return handleTestSubmit(request, env, ctx);
-    }
-
-    if (url.pathname === '/test-submit' && request.method === 'DELETE') {
-      return handleTestSubmitDelete(request, env);
-    }
-
-    if (!PROXY_PATHS.includes(url.pathname)) {
-      return new Response('Not Found', { status: 404 });
-    }
-
-    const target = new URL(url.pathname + url.search, 'https://github.com');
-    const proxied = await fetch(
-      new Request(target, {
-        method: request.method,
-        headers: request.headers,
-        body: request.body,
-      }),
-    );
-
-    const response = new Response(proxied.body, {
-      status: proxied.status,
-      headers: proxied.headers,
-    });
-
-    Object.entries(CORS_HEADERS).forEach(([k, v]) => response.headers.set(k, v));
-
-    return response;
   },
 };
