@@ -92,6 +92,9 @@ jobs:
         run: |
           rm -rf dist/answers dist/answers-index.json
 
+      - name: Copy index.html to 404.html for SPA routing
+        run: cp dist/index.html dist/404.html
+
       - name: Deploy main to root
         if: github.ref == 'refs/heads/main'
         uses: peaceiris/actions-gh-pages@v3
