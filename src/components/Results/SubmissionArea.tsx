@@ -1,6 +1,6 @@
 import { Button, CircularProgress, TextField, Typography } from '@mui/material';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { useGitHubAuth } from '../../contexts/GitHubAuthContext';
 import styles from './SubmissionArea.module.css';
@@ -97,7 +97,11 @@ const AuthenticatedView = ({
  * @param code - Current editor code to commit.
  */
 const SubmissionArea = ({ quId, code }: Props) => {
-  const { authStatus, deviceFlowData, githubUser, submitting, submitError, submitSuccess, startAuth, submit } = useGitHubAuth();
+  const { authStatus, deviceFlowData, githubUser, submitting, submitError, submitSuccess, startAuth, submit, resetSubmit } = useGitHubAuth();
+
+  useEffect(() => {
+    resetSubmit();
+  }, [quId, resetSubmit]);
 
   if (submitSuccess) {
     return (
