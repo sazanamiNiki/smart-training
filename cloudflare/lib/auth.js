@@ -9,9 +9,13 @@
 export async function authenticateUser(request, env) {
   const authHeader = request.headers.get('Authorization') ?? '';
   const userToken = authHeader.replace(/^Bearer\s+/, '');
-  if (!userToken) return null;
+  if (!userToken) {
+    console.warn('[auth] missing authorization token');
+    return null;
+  }
 
   if (env.ENVIRONMENT !== 'production' && userToken === 'test-token-e2e') {
+    console.info('[auth] test token accepted (non-production)');
     return { login: 'test-user', id: 0 };
   }
 
@@ -23,7 +27,12 @@ export async function authenticateUser(request, env) {
   };
 
   const userRes = await fetch('https://api.github.com/user', { headers: ghHeaders });
-  if (!userRes.ok) return null;
+  if (!userRes.ok) {
+    console.warn(`[auth] GitHub /user returned ${userRes.status}`);
+    return null;
+  }
 
-  return userRes.json();
+  const userData = await userRes.json();
+  console.info(`[auth] authenticated user=${userData.login}`);
+  return userData;
 }

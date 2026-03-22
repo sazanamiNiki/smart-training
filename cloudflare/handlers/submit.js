@@ -14,6 +14,7 @@ export async function handleSubmit(request, env, ctx) {
   const authHeader = request.headers.get('Authorization') ?? '';
   const userToken = authHeader.replace(/^Bearer\s+/, '');
   if (!userToken) {
+    console.warn('[submit] missing authorization token');
     return new Response(JSON.stringify({ error: '認証トークンが必要です。' }), {
       status: 401,
       headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
@@ -44,7 +45,7 @@ export async function handleSubmit(request, env, ctx) {
   const login = userData.login;
 
   if (!emailsRes.ok) {
-    console.error(`[submit] GET /user/emails failed: ${emailsRes.status} ${await emailsRes.text()}`);
+    console.error(`[submit] GET /user/emails failed: ${emailsRes.status} ${await emailsRes.text()} user=${login}`);
     return new Response(JSON.stringify({ error: 'メールアドレスの取得に失敗しました。' }), {
       status: 403,
       headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
@@ -57,7 +58,7 @@ export async function handleSubmit(request, env, ctx) {
   const hasAllowedEmail = !!allowedEmailEntry;
 
   if (!hasAllowedEmail) {
-    console.error(`[submit] email domain not allowed for ${login}`);
+    console.warn(`[submit] email domain not allowed for user=${login}`);
     return new Response(JSON.stringify({ error: 'Email domain not allowed' }), {
       status: 403,
       headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
@@ -68,6 +69,7 @@ export async function handleSubmit(request, env, ctx) {
   const contentLength = parseInt(request.headers.get('Content-Length') || '0', 10);
   const MAX_BODY_SIZE = 100 * 1024; // 100KB
   if (contentLength > MAX_BODY_SIZE) {
+    console.warn(`[submit] request body too large: ${contentLength} bytes user=${login}`);
     return new Response(JSON.stringify({ error: 'リクエストサイズが上限を超えています。' }), {
       status: 413,
       headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
@@ -78,6 +80,7 @@ export async function handleSubmit(request, env, ctx) {
   try {
     body = await request.json();
   } catch {
+    console.warn(`[submit] invalid request body user=${login}`);
     return new Response(JSON.stringify({ error: 'Invalid request body.' }), {
       status: 400,
       headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
@@ -86,6 +89,7 @@ export async function handleSubmit(request, env, ctx) {
   const { quId, code, description } = body;
 
   if (!quId || typeof quId !== 'string' || !/^qu\d+$/.test(quId)) {
+    console.warn(`[submit] invalid quId="${quId}" user=${login}`);
     return new Response(JSON.stringify({ error: 'quId の形式が不正です。' }), {
       status: 400,
       headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
@@ -93,14 +97,39 @@ export async function handleSubmit(request, env, ctx) {
   }
 
   if (!code || typeof code !== 'string' || code.length > MAX_BODY_SIZE) {
+    console.warn(`[submit] invalid code user=${login} quId=${quId}`);
     return new Response(JSON.stringify({ error: 'code が不正です。' }), {
       status: 400,
       headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
     });
   }
   if (typeof description !== 'string' || description.length > MAX_BODY_SIZE) {
+    console.warn(`[submit] invalid description user=${login} quId=${quId}`);
     return new Response(JSON.stringify({ error: 'description が不正です。' }), {
       status: 400,
+      headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
+    });
+  }
+
+  // --- Duplicate check before committing ---
+  try {
+    const existingSubmission = await env.DB.prepare(
+      "SELECT id FROM submissions WHERE user_id = ? AND qu_id = ? AND review_status != 'failed'",
+    )
+      .bind(login, quId)
+      .first();
+
+    if (existingSubmission) {
+      console.info(`[submit] duplicate submission rejected user=${login} quId=${quId}`);
+      return new Response(JSON.stringify({ error: '既に提出済みです。' }), {
+        status: 409,
+        headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
+      });
+    }
+  } catch (e) {
+    console.error(`[submit] D1 duplicate check failed user=${login} quId=${quId}: ${e instanceof Error ? e.message : String(e)}`);
+    return new Response(JSON.stringify({ error: '提出の確認に失敗しました。しばらく経ってから再試行してください。' }), {
+      status: 500,
       headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
     });
   }
@@ -151,37 +180,40 @@ export async function handleSubmit(request, env, ctx) {
       ],
       commitMessage,
     );
+    console.info(`[submit] committed to GitHub user=${login} quId=${quId} branch=${branch}`);
   } catch (e) {
-    console.error(`[submit] commitFile failed: ${e instanceof Error ? e.message : String(e)}`);
+    console.error(`[submit] commitFile failed user=${login} quId=${quId}: ${e instanceof Error ? e.message : String(e)}`);
     return new Response(JSON.stringify({ error: 'コミットに失敗しました。' }), {
       status: 500,
       headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
     });
   }
 
-  const existingSubmission = await env.DB.prepare("SELECT id FROM submissions WHERE user_id = ? AND qu_id = ? AND review_status != 'failed'")
-    .bind(login, quId)
-    .first();
+  // --- Post-commit: save to D1/R2 and trigger review ---
+  // Commit succeeded; D1/R2 failures are logged but do not fail the response.
+  const r2CodeKey = `submissions/${login}/${quId}/code.ts`;
+  let submissionId = null;
+  try {
+    await env.REVIEW_STORAGE.put(r2CodeKey, code);
+    console.info(`[submit] code saved to R2 user=${login} quId=${quId} key=${r2CodeKey}`);
 
-  if (existingSubmission) {
-    return new Response(JSON.stringify({ error: '既に提出済みです。' }), {
-      status: 409,
-      headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
-    });
+    const submittedAt = new Date().toISOString();
+    const insertResult = await env.DB.prepare(
+      "INSERT INTO submissions (user_id, email, qu_id, r2_code_key, review_status, submitted_at) VALUES (?, ?, ?, ?, 'pending', ?)",
+    )
+      .bind(login, allowedEmailEntry.email, quId, r2CodeKey, submittedAt)
+      .run();
+    submissionId = insertResult.meta.last_row_id;
+    console.info(`[submit] D1 record created submissionId=${submissionId} user=${login} quId=${quId}`);
+  } catch (e) {
+    console.error(`[submit] post-commit D1/R2 failed user=${login} quId=${quId}: ${e instanceof Error ? e.message : String(e)}`);
   }
 
-  const r2CodeKey = `submissions/${login}/${quId}/code.ts`;
-  await env.REVIEW_STORAGE.put(r2CodeKey, code);
-
-  const submittedAt = new Date().toISOString();
-  const insertResult = await env.DB.prepare(
-    "INSERT INTO submissions (user_id, email, qu_id, r2_code_key, review_status, submitted_at) VALUES (?, ?, ?, ?, 'pending', ?)",
-  )
-    .bind(login, allowedEmailEntry.email, quId, r2CodeKey, submittedAt)
-    .run();
-  const submissionId = insertResult.meta.last_row_id;
-
-  ctx.waitUntil(runReviewBackground(env, login, allowedEmailEntry.email, quId, code, submissionId));
+  if (submissionId !== null) {
+    ctx.waitUntil(runReviewBackground(env, login, allowedEmailEntry.email, quId, code, submissionId));
+  } else {
+    console.warn(`[submit] skipping review background task because submissionId is null user=${login} quId=${quId}`);
+  }
 
   return new Response(JSON.stringify({ success: true }), {
     status: 200,
