@@ -1,8 +1,8 @@
 .root {
-  container-type: size;
+  container-type: inline-size;
   line-height: 1.6;
   word-wrap: break-word;
-  font-size: 1.5cqb;
+  font-size: 14px;
   color: var(--text-primary);
   overflow: auto;
 }
