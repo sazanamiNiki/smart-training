@@ -86,6 +86,7 @@ async function pollForToken(deviceCode: string, interval: number, expiresIn: num
  * @returns Authentication state, device flow data, and submit/startAuth handlers.
  */
 export function useGitHubSubmission(): UseGitHubSubmissionReturn {
+  const [githubToken, setGithubToken] = useState<string | null>(() => loadGitHubToken());
   const [authStatus, setAuthStatus] = useState<AuthStatus>(() => (loadGitHubToken() ? 'authenticated' : 'idle'));
   const [deviceFlowData, setDeviceFlowData] = useState<DeviceFlowData | null>(null);
   const [githubUser, setGithubUser] = useState<string | null>(() => loadGitHubUser());
@@ -97,6 +98,7 @@ export function useGitHubSubmission(): UseGitHubSubmissionReturn {
     const token = loadGitHubToken();
     const user = loadGitHubUser();
     if (token && user) {
+      setGithubToken(token);
       setAuthStatus('authenticated');
       setGithubUser(user);
     }
@@ -128,6 +130,7 @@ export function useGitHubSubmission(): UseGitHubSubmissionReturn {
 
       saveGitHubToken(token);
       saveGitHubUser(user.login);
+      setGithubToken(token);
       setGithubUser(user.login);
       setDeviceFlowData(null);
       setAuthStatus('authenticated');
@@ -138,34 +141,37 @@ export function useGitHubSubmission(): UseGitHubSubmissionReturn {
     }
   }, []);
 
-  const submit = useCallback(async (quId: string, code: string, description: string) => {
-    const token = loadGitHubToken();
-    if (!token) {
-      setSubmitError('認証が必要です。');
-      return;
-    }
-    setSubmitting(true);
-    setSubmitError(null);
-    try {
-      const res = await fetch(`${SUBMIT_BASE}/submit`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ quId, code, description }),
-      });
-      if (!res.ok) {
-        const { error } = await res.json();
-        throw new Error(error ?? '提出に失敗しました。');
+  const submit = useCallback(
+    async (quId: string, code: string, description: string) => {
+      if (!githubToken) {
+        setAuthStatus('idle');
+        setSubmitError('認証が必要です。再度GitHubで認証してください。');
+        return;
       }
-      setSubmitSuccess(true);
-    } catch (e) {
-      setSubmitError(e instanceof Error ? e.message : '提出に失敗しました。');
-    } finally {
-      setSubmitting(false);
-    }
-  }, []);
+      setSubmitting(true);
+      setSubmitError(null);
+      try {
+        const res = await fetch(`${SUBMIT_BASE}/submit`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${githubToken}`,
+          },
+          body: JSON.stringify({ quId, code, description }),
+        });
+        if (!res.ok) {
+          const { error } = await res.json();
+          throw new Error(error ?? '提出に失敗しました。');
+        }
+        setSubmitSuccess(true);
+      } catch (e) {
+        setSubmitError(e instanceof Error ? e.message : '提出に失敗しました。');
+      } finally {
+        setSubmitting(false);
+      }
+    },
+    [githubToken],
+  );
 
   return {
     authStatus,
