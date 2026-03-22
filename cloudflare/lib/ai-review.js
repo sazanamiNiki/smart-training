@@ -1,5 +1,18 @@
 import { AGGREGATE_REVIEW_SYSTEM_PROMPT, REVIEW_SYSTEM_PROMPT } from './constants.js';
 
+const REVIEW_TIMEOUT_MS = 90_000;
+const AGGREGATE_TIMEOUT_MS = 120_000;
+
+/**
+ * Return a fetch signal that aborts after the given milliseconds.
+ *
+ * @param ms - Timeout in milliseconds.
+ * @returns AbortSignal.
+ */
+function timeoutSignal(ms) {
+  return AbortSignal.timeout(ms);
+}
+
 /**
  * Call Gemini API to generate a code review.
  *
@@ -7,13 +20,14 @@ import { AGGREGATE_REVIEW_SYSTEM_PROMPT, REVIEW_SYSTEM_PROMPT } from './constant
  * @param code - Submitted code.
  * @param quId - Question ID.
  * @returns Review markdown string.
- * @throws {Error} If the API request fails.
+ * @throws {Error} If the API request fails or times out.
  */
 async function callGeminiAPI(env, code, quId) {
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${env.GEMINI_API_KEY}`;
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${env.GEMINI_API_KEY}`;
   const res = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
+    signal: timeoutSignal(REVIEW_TIMEOUT_MS),
     body: JSON.stringify({
       system_instruction: {
         parts: [{ text: REVIEW_SYSTEM_PROMPT }],
@@ -33,17 +47,22 @@ async function callGeminiAPI(env, code, quId) {
     throw new Error(`Gemini API error: ${res.status} ${await res.text()}`);
   }
   const data = await res.json();
-  return data.candidates?.[0]?.content?.parts?.[0]?.text ?? '';
+  const parts = data.candidates?.[0]?.content?.parts ?? [];
+  const textPart = parts.find((p) => !p.thought && typeof p.text === 'string');
+  if (!textPart) {
+    console.error(`[gemini] no text part in review response: ${JSON.stringify(data).slice(0, 500)}`);
+  }
+  return textPart?.text ?? '';
 }
 
 /**
- * Call Claude Opus API to generate a code review.
+ * Call Claude API to generate a code review.
  *
  * @param env - Worker environment bindings.
  * @param code - Submitted code.
  * @param quId - Question ID.
  * @returns Review markdown string.
- * @throws {Error} If the API request fails.
+ * @throws {Error} If the API request fails or times out.
  */
 async function callClaudeAPI(env, code, quId) {
   const res = await fetch('https://api.anthropic.com/v1/messages', {
@@ -53,6 +72,7 @@ async function callClaudeAPI(env, code, quId) {
       'x-api-key': env.ANTHROPIC_API_KEY,
       'anthropic-version': '2023-06-01',
     },
+    signal: timeoutSignal(REVIEW_TIMEOUT_MS),
     body: JSON.stringify({
       model: 'claude-opus-4-6',
       max_tokens: 2048,
@@ -97,14 +117,15 @@ export async function generateReview(env, code, quId) {
  * @param env - Worker environment bindings.
  * @param codesWithQuId - Array of { quId, code } for all submissions.
  * @returns Aggregate review markdown string.
- * @throws {Error} If the API request fails.
+ * @throws {Error} If the API request fails or times out.
  */
 async function callGeminiAggregateAPI(env, codesWithQuId) {
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${env.GEMINI_API_KEY}`;
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${env.GEMINI_API_KEY}`;
   const codeSection = codesWithQuId.map(({ quId, code }) => `### 問題ID: ${quId}\n\`\`\`typescript\n${code}\n\`\`\``).join('\n\n');
   const res = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
+    signal: timeoutSignal(AGGREGATE_TIMEOUT_MS),
     body: JSON.stringify({
       system_instruction: {
         parts: [{ text: AGGREGATE_REVIEW_SYSTEM_PROMPT }],
@@ -124,16 +145,21 @@ async function callGeminiAggregateAPI(env, codesWithQuId) {
     throw new Error(`Gemini API error: ${res.status} ${await res.text()}`);
   }
   const data = await res.json();
-  return data.candidates?.[0]?.content?.parts?.[0]?.text ?? '';
+  const parts = data.candidates?.[0]?.content?.parts ?? [];
+  const textPart = parts.find((p) => !p.thought && typeof p.text === 'string');
+  if (!textPart) {
+    console.error(`[gemini] no text part in aggregate review response: ${JSON.stringify(data).slice(0, 500)}`);
+  }
+  return textPart?.text ?? '';
 }
 
 /**
- * Call Claude Opus API to generate an aggregate code review.
+ * Call Claude API to generate an aggregate code review.
  *
  * @param env - Worker environment bindings.
  * @param codesWithQuId - Array of { quId, code } for all submissions.
  * @returns Aggregate review markdown string.
- * @throws {Error} If the API request fails.
+ * @throws {Error} If the API request fails or times out.
  */
 async function callClaudeAggregateAPI(env, codesWithQuId) {
   const codeSection = codesWithQuId.map(({ quId, code }) => `### 問題ID: ${quId}\n\`\`\`typescript\n${code}\n\`\`\``).join('\n\n');
@@ -144,6 +170,7 @@ async function callClaudeAggregateAPI(env, codesWithQuId) {
       'x-api-key': env.ANTHROPIC_API_KEY,
       'anthropic-version': '2023-06-01',
     },
+    signal: timeoutSignal(AGGREGATE_TIMEOUT_MS),
     body: JSON.stringify({
       model: 'claude-opus-4-6',
       max_tokens: 4096,
