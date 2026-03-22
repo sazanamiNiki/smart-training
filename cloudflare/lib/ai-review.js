@@ -10,7 +10,7 @@ import { AGGREGATE_REVIEW_SYSTEM_PROMPT, REVIEW_SYSTEM_PROMPT } from './constant
  * @throws {Error} If the API request fails.
  */
 async function callGeminiAPI(env, code, quId) {
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${env.GEMINI_API_KEY}`;
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${env.GEMINI_API_KEY}`;
   const res = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -100,7 +100,7 @@ export async function generateReview(env, code, quId) {
  * @throws {Error} If the API request fails.
  */
 async function callGeminiAggregateAPI(env, codesWithQuId) {
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${env.GEMINI_API_KEY}`;
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${env.GEMINI_API_KEY}`;
   const codeSection = codesWithQuId.map(({ quId, code }) => `### 問題ID: ${quId}\n\`\`\`typescript\n${code}\n\`\`\``).join('\n\n');
   const res = await fetch(url, {
     method: 'POST',
