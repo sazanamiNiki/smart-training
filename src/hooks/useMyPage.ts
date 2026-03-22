@@ -8,26 +8,29 @@ const POLL_INTERVAL_MS = 10_000;
 
 export interface UseMyPageReturn {
   submissions: Submission[];
-  aggregateReview: AggregateReview | null;
+  aggregateReviews: AggregateReview[];
   loading: boolean;
   error: string | null;
   fetchReview: (quId: string) => Promise<string>;
-  fetchAggregateReview: () => Promise<string>;
+  fetchAggregateReviewById: (id: number) => Promise<string>;
   refresh: () => Promise<void>;
   retryReview: (quId: string) => Promise<void>;
+  requestAggregateReview: () => Promise<void>;
 }
 
 /**
- * Fetch mypage data and poll while any submission is pending.
+ * Fetch mypage data and poll while any submission is pending or aggregate review is awaited.
  *
- * @returns Submissions list, aggregate review, loading/error state, and review fetch helpers.
+ * @returns Submissions list, aggregate reviews, loading/error state, and review fetch helpers.
  */
 export function useMyPage(): UseMyPageReturn {
   const [submissions, setSubmissions] = useState<Submission[]>([]);
-  const [aggregateReview, setAggregateReview] = useState<AggregateReview | null>(null);
+  const [aggregateReviews, setAggregateReviews] = useState<AggregateReview[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const pollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pendingAggregateReviewRef = useRef(false);
+  const aggregateReviewsCountRef = useRef(0);
 
   const clearPollTimer = () => {
     if (pollTimerRef.current !== null) {
@@ -56,11 +59,18 @@ export function useMyPage(): UseMyPageReturn {
       const data = await fetchMyPage();
       if (!data) return;
       setSubmissions(data.submissions);
-      setAggregateReview(data.aggregateReview);
+
+      const newReviews = data.aggregateReviews ?? [];
+      if (pendingAggregateReviewRef.current && newReviews.length > aggregateReviewsCountRef.current) {
+        pendingAggregateReviewRef.current = false;
+      }
+      aggregateReviewsCountRef.current = newReviews.length;
+      setAggregateReviews(newReviews);
+
       setError(null);
 
       const hasPending = data.submissions.some((s) => s.review_status === 'pending');
-      if (hasPending) {
+      if (hasPending || pendingAggregateReviewRef.current) {
         pollTimerRef.current = setTimeout(() => {
           void loadData();
         }, POLL_INTERVAL_MS);
@@ -106,11 +116,11 @@ export function useMyPage(): UseMyPageReturn {
     return res.text();
   }, []);
 
-  const fetchAggregateReview = useCallback(async (): Promise<string> => {
+  const fetchAggregateReviewById = useCallback(async (id: number): Promise<string> => {
     const token = loadGitHubToken();
     if (!token) throw new Error('認証が必要です。');
 
-    const res = await fetch(`${MYPAGE_BASE}/review?type=aggregate`, {
+    const res = await fetch(`${MYPAGE_BASE}/review?type=aggregate&id=${id}`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     if (!res.ok) {
@@ -139,5 +149,31 @@ export function useMyPage(): UseMyPageReturn {
     [loadData],
   );
 
-  return { submissions, aggregateReview, loading, error, fetchReview, fetchAggregateReview, refresh, retryReview };
+  const requestAggregateReview = useCallback(async (): Promise<void> => {
+    const token = loadGitHubToken();
+    if (!token) throw new Error('認証が必要です。');
+
+    const res = await fetch(`${MYPAGE_BASE}/aggregate-review`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      throw new Error((body as { error?: string }).error ?? '集計レビューの申請に失敗しました。');
+    }
+    pendingAggregateReviewRef.current = true;
+    await loadData();
+  }, [loadData]);
+
+  return {
+    submissions,
+    aggregateReviews,
+    loading,
+    error,
+    fetchReview,
+    fetchAggregateReviewById,
+    refresh,
+    retryReview,
+    requestAggregateReview,
+  };
 }

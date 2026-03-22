@@ -1,3 +1,4 @@
+import { handleAggregateReview } from './handlers/aggregate-review.js';
 import { handleMyPage } from './handlers/mypage.js';
 import { handleRetryReview } from './handlers/retry-review.js';
 import { handleReview } from './handlers/review.js';
@@ -31,6 +32,10 @@ export default {
 
     if (url.pathname === '/retry-review' && request.method === 'POST') {
       return handleRetryReview(request, env, ctx);
+    }
+
+    if (url.pathname === '/aggregate-review' && request.method === 'POST') {
+      return handleAggregateReview(request, env, ctx);
     }
 
     if (url.pathname === '/test-submit' && request.method === 'POST') {

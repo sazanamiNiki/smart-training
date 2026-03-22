@@ -28,7 +28,11 @@ export async function handleMyPage(request, env) {
       )
         .bind(userId)
         .all(),
-      env.DB.prepare('SELECT id, user_id, r2_review_key, created_at FROM aggregate_reviews WHERE user_id = ?').bind(userId).first(),
+      env.DB.prepare(
+        'SELECT id, user_id, r2_review_key, created_at, submission_ids FROM aggregate_reviews WHERE user_id = ? ORDER BY created_at DESC',
+      )
+        .bind(userId)
+        .all(),
     ]);
 
     console.info(`[mypage] found ${submissionsResult.results.length} submissions for user=${userId}`);
@@ -36,7 +40,8 @@ export async function handleMyPage(request, env) {
     return new Response(
       JSON.stringify({
         submissions: submissionsResult.results,
-        aggregateReview: aggregateResult ?? null,
+        aggregateReviews: aggregateResult.results,
+        aggregateReview: aggregateResult.results[0] ?? null,
       }),
       {
         status: 200,

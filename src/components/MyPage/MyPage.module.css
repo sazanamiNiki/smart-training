@@ -60,3 +60,7 @@
   align-items: center;
   gap: 8px;
 }
+
+.aggregateRequestRow {
+  flex-shrink: 0;
+}

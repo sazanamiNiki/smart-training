@@ -93,7 +93,19 @@ type AuthenticatedMyPageProps = {
 };
 
 function AuthenticatedMyPage({ view, selectedQuId, onSelectReview, onBack }: AuthenticatedMyPageProps) {
-  const { submissions, aggregateReview, loading, error, fetchReview, fetchAggregateReview, retryReview } = useMyPage();
+  const { submissions, aggregateReviews, loading, error, fetchReview, fetchAggregateReviewById, retryReview, requestAggregateReview } = useMyPage();
+  const [requestingAggregate, setRequestingAggregate] = useState(false);
+
+  const completedCount = submissions.filter((s) => s.review_status === 'completed').length;
+
+  const handleRequestAggregate = async () => {
+    setRequestingAggregate(true);
+    try {
+      await requestAggregateReview();
+    } finally {
+      setRequestingAggregate(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -127,9 +139,22 @@ function AuthenticatedMyPage({ view, selectedQuId, onSelectReview, onBack }: Aut
         <Typography variant="h6" className={styles.heading}>
           マイページ
         </Typography>
-        {aggregateReview && (
+        {aggregateReviews.length > 0 && (
           <div className={styles.aggregateSection}>
-            <AggregateReviewPanel fetchAggregateReview={fetchAggregateReview} />
+            <AggregateReviewPanel aggregateReviews={aggregateReviews} fetchAggregateReviewById={fetchAggregateReviewById} />
+          </div>
+        )}
+        {completedCount >= 5 && (
+          <div className={styles.aggregateRequestRow}>
+            <Button
+              variant="outlined"
+              size="small"
+              disabled={requestingAggregate}
+              startIcon={requestingAggregate ? <CircularProgress size={12} color="inherit" /> : undefined}
+              onClick={() => void handleRequestAggregate()}
+            >
+              {aggregateReviews.length === 0 ? '傾向を分析する' : '最新の傾向を再分析する'}
+            </Button>
           </div>
         )}
         <Typography variant="body2" color="text.secondary" className={styles.sectionLabel}>
