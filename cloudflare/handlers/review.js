@@ -12,6 +12,7 @@ import { CORS_HEADERS, SECURITY_HEADERS } from '../lib/constants.js';
 export async function handleReview(request, env) {
   const userData = await authenticateUser(request, env);
   if (!userData) {
+    console.warn('[review] authentication failed');
     return new Response(JSON.stringify({ error: '認証トークンが無効です。' }), {
       status: 401,
       headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
@@ -24,9 +25,52 @@ export async function handleReview(request, env) {
   const quId = url.searchParams.get('quId');
 
   if (type === 'aggregate') {
-    const r2Key = `aggregate-reviews/${userId}/review.md`;
-    const obj = await env.REVIEW_STORAGE.get(r2Key);
+    console.info(`[review] fetching aggregate review for user=${userId}`);
+    try {
+      const r2Key = `aggregate-reviews/${userId}/review.md`;
+      const obj = await env.REVIEW_STORAGE.get(r2Key);
+      if (obj === null) {
+        console.info(`[review] aggregate review not found user=${userId}`);
+        return new Response('Not found', { status: 404, headers: CORS_HEADERS });
+      }
+      const text = await obj.text();
+      return new Response(text, {
+        status: 200,
+        headers: { 'Content-Type': 'text/markdown; charset=utf-8', ...CORS_HEADERS, ...SECURITY_HEADERS },
+      });
+    } catch (e) {
+      console.error(`[review] R2 get failed for aggregate user=${userId}: ${e instanceof Error ? e.message : String(e)}`);
+      return new Response(JSON.stringify({ error: 'レビューの取得に失敗しました。' }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
+      });
+    }
+  }
+
+  if (!quId || typeof quId !== 'string' || !/^qu\d+$/.test(quId)) {
+    console.warn(`[review] invalid quId="${quId}" user=${userId}`);
+    return new Response(JSON.stringify({ error: 'quId の形式が不正です。' }), {
+      status: 400,
+      headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
+    });
+  }
+
+  console.info(`[review] fetching review for user=${userId} quId=${quId}`);
+  try {
+    const submission = await env.DB.prepare(
+      "SELECT r2_review_key FROM submissions WHERE user_id = ? AND qu_id = ? AND review_status = 'completed'",
+    )
+      .bind(userId, quId)
+      .first();
+
+    if (!submission) {
+      console.info(`[review] completed submission not found user=${userId} quId=${quId}`);
+      return new Response('Not found', { status: 404, headers: CORS_HEADERS });
+    }
+
+    const obj = await env.REVIEW_STORAGE.get(submission.r2_review_key);
     if (obj === null) {
+      console.error(`[review] R2 object missing for key=${submission.r2_review_key} user=${userId} quId=${quId}`);
       return new Response('Not found', { status: 404, headers: CORS_HEADERS });
     }
     const text = await obj.text();
@@ -34,30 +78,11 @@ export async function handleReview(request, env) {
       status: 200,
       headers: { 'Content-Type': 'text/markdown; charset=utf-8', ...CORS_HEADERS, ...SECURITY_HEADERS },
     });
-  }
-
-  if (!quId || typeof quId !== 'string' || !/^qu\d+$/.test(quId)) {
-    return new Response(JSON.stringify({ error: 'quId の形式が不正です。' }), {
-      status: 400,
+  } catch (e) {
+    console.error(`[review] D1/R2 failed user=${userId} quId=${quId}: ${e instanceof Error ? e.message : String(e)}`);
+    return new Response(JSON.stringify({ error: 'レビューの取得に失敗しました。' }), {
+      status: 500,
       headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
     });
   }
-
-  const submission = await env.DB.prepare("SELECT r2_review_key FROM submissions WHERE user_id = ? AND qu_id = ? AND review_status = 'completed'")
-    .bind(userId, quId)
-    .first();
-
-  if (!submission) {
-    return new Response('Not found', { status: 404, headers: CORS_HEADERS });
-  }
-
-  const obj = await env.REVIEW_STORAGE.get(submission.r2_review_key);
-  if (obj === null) {
-    return new Response('Not found', { status: 404, headers: CORS_HEADERS });
-  }
-  const text = await obj.text();
-  return new Response(text, {
-    status: 200,
-    headers: { 'Content-Type': 'text/markdown; charset=utf-8', ...CORS_HEADERS, ...SECURITY_HEADERS },
-  });
 }

@@ -14,6 +14,7 @@ export interface UseMyPageReturn {
   fetchReview: (quId: string) => Promise<string>;
   fetchAggregateReview: () => Promise<string>;
   refresh: () => Promise<void>;
+  retryReview: (quId: string) => Promise<void>;
 }
 
 /**
@@ -119,5 +120,24 @@ export function useMyPage(): UseMyPageReturn {
     return res.text();
   }, []);
 
-  return { submissions, aggregateReview, loading, error, fetchReview, fetchAggregateReview, refresh };
+  const retryReview = useCallback(
+    async (quId: string): Promise<void> => {
+      const token = loadGitHubToken();
+      if (!token) throw new Error('認証が必要です。');
+
+      const res = await fetch(`${MYPAGE_BASE}/retry-review`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ quId }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error((body as { error?: string }).error ?? '再申請に失敗しました。');
+      }
+      await loadData();
+    },
+    [loadData],
+  );
+
+  return { submissions, aggregateReview, loading, error, fetchReview, fetchAggregateReview, refresh, retryReview };
 }

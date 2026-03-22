@@ -93,7 +93,7 @@ type AuthenticatedMyPageProps = {
 };
 
 function AuthenticatedMyPage({ view, selectedQuId, onSelectReview, onBack }: AuthenticatedMyPageProps) {
-  const { submissions, aggregateReview, loading, error, fetchReview, fetchAggregateReview } = useMyPage();
+  const { submissions, aggregateReview, loading, error, fetchReview, fetchAggregateReview, retryReview } = useMyPage();
 
   if (loading) {
     return (
@@ -135,7 +135,7 @@ function AuthenticatedMyPage({ view, selectedQuId, onSelectReview, onBack }: Aut
         <Typography variant="body2" color="text.secondary" className={styles.sectionLabel}>
           提出履歴
         </Typography>
-        <SubmissionList submissions={submissions} onSelectReview={onSelectReview} />
+        <SubmissionList submissions={submissions} onSelectReview={onSelectReview} onRetry={retryReview} />
       </div>
     </div>
   );
