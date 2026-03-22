@@ -25,38 +25,50 @@ async function notifyGAS(env, email) {
 }
 
 /**
- * Run aggregate review generation in the background after the 5th submission.
+ * Run aggregate review generation in the background using the latest 5 completed submissions.
+ * Idempotency is checked by comparing sorted submission IDs.
  *
  * @param env - Worker environment bindings.
  * @param userId - GitHub login.
  * @param email - User's email address.
  */
-async function runAggregateReviewBackground(env, userId, email) {
+export async function runAggregateReviewBackground(env, userId, email) {
   try {
-    const existing = await env.DB.prepare('SELECT id FROM aggregate_reviews WHERE user_id = ?').bind(userId).first();
-    if (existing) {
-      console.info(`[aggregate-review] already exists, skipping user=${userId}`);
-      return;
-    }
-
-    const submissions = await env.DB.prepare(
-      "SELECT qu_id, r2_code_key FROM submissions WHERE user_id = ? AND review_status = 'completed'",
+    const latest5 = await env.DB.prepare(
+      "SELECT id, qu_id, r2_code_key FROM submissions WHERE user_id = ? AND review_status = 'completed' ORDER BY submitted_at DESC LIMIT 5",
     )
       .bind(userId)
       .all();
 
-    console.info(`[aggregate-review] ${submissions.results.length} completed submissions found for user=${userId}`);
+    if (latest5.results.length < 5) {
+      console.info(`[aggregate-review] less than 5 completed, skipping user=${userId}`);
+      return;
+    }
+
+    const submissionIds = latest5.results
+      .map((r) => r.id)
+      .sort((a, b) => a - b)
+      .join(',');
+
+    const existing = await env.DB.prepare(
+      'SELECT id FROM aggregate_reviews WHERE user_id = ? AND submission_ids = ?',
+    )
+      .bind(userId, submissionIds)
+      .first();
+    if (existing) {
+      console.info(`[aggregate-review] same 5 submissions already reviewed, skipping user=${userId}`);
+      return;
+    }
 
     const codesWithQuId = (
       await Promise.all(
-        submissions.results.map(async (row) => {
+        latest5.results.map(async (row) => {
           const obj = await env.REVIEW_STORAGE.get(row.r2_code_key);
           if (obj === null) {
             console.warn(`[aggregate-review] R2 object missing key=${row.r2_code_key} user=${userId}`);
             return null;
           }
-          const code = await obj.text();
-          return { quId: row.qu_id, code };
+          return { quId: row.qu_id, code: await obj.text() };
         }),
       )
     ).filter((item) => item !== null);
@@ -66,17 +78,19 @@ async function runAggregateReviewBackground(env, userId, email) {
       return;
     }
 
-    console.info(`[aggregate-review] generating review for user=${userId} submissions=${codesWithQuId.length}`);
+    console.info(`[aggregate-review] generating review for user=${userId} submissionIds=${submissionIds}`);
     const aggregateMarkdown = await generateAggregateReview(env, codesWithQuId);
-    const r2ReviewKey = `aggregate-reviews/${userId}/review.md`;
+    const createdAt = new Date().toISOString();
+    const r2ReviewKey = `aggregate-reviews/${userId}/${createdAt}/review.md`;
     await env.REVIEW_STORAGE.put(r2ReviewKey, aggregateMarkdown);
 
-    const createdAt = new Date().toISOString();
-    await env.DB.prepare('INSERT INTO aggregate_reviews (user_id, r2_review_key, created_at) VALUES (?, ?, ?)')
-      .bind(userId, r2ReviewKey, createdAt)
+    await env.DB.prepare(
+      'INSERT INTO aggregate_reviews (user_id, r2_review_key, created_at, submission_ids) VALUES (?, ?, ?, ?)',
+    )
+      .bind(userId, r2ReviewKey, createdAt, submissionIds)
       .run();
 
-    console.info(`[aggregate-review] completed user=${userId} key=${r2ReviewKey}`);
+    console.info(`[aggregate-review] completed user=${userId} key=${r2ReviewKey} submissionIds=${submissionIds}`);
     await notifyGAS(env, email);
   } catch (err) {
     console.error(`[aggregate-review] failed for user=${userId}: ${err instanceof Error ? err.message : String(err)}`);

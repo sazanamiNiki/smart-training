@@ -94,11 +94,13 @@ export interface AggregateReview {
   user_id: string;
   r2_review_key: string;
   created_at: string;
+  submission_ids: string;
 }
 
 export interface MyPageResponse {
   submissions: Submission[];
-  aggregateReview: AggregateReview | null;
+  aggregateReviews: AggregateReview[];
+  aggregateReview?: AggregateReview | null;
 }
 
 export interface ReviewResponse {
