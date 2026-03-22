@@ -33,7 +33,12 @@ async function callGeminiAPI(env, code, quId) {
     throw new Error(`Gemini API error: ${res.status} ${await res.text()}`);
   }
   const data = await res.json();
-  return data.candidates?.[0]?.content?.parts?.[0]?.text ?? '';
+  const parts = data.candidates?.[0]?.content?.parts ?? [];
+  const textPart = parts.find((p) => !p.thought && typeof p.text === 'string');
+  if (!textPart) {
+    console.error(`[gemini] no text part in review response: ${JSON.stringify(data).slice(0, 500)}`);
+  }
+  return textPart?.text ?? '';
 }
 
 /**
@@ -124,7 +129,12 @@ async function callGeminiAggregateAPI(env, codesWithQuId) {
     throw new Error(`Gemini API error: ${res.status} ${await res.text()}`);
   }
   const data = await res.json();
-  return data.candidates?.[0]?.content?.parts?.[0]?.text ?? '';
+  const parts = data.candidates?.[0]?.content?.parts ?? [];
+  const textPart = parts.find((p) => !p.thought && typeof p.text === 'string');
+  if (!textPart) {
+    console.error(`[gemini] no text part in aggregate review response: ${JSON.stringify(data).slice(0, 500)}`);
+  }
+  return textPart?.text ?? '';
 }
 
 /**
