@@ -132,7 +132,7 @@ export async function runReviewBackground(env, userId, email, quId, code, submis
     const completedCount = countResult?.cnt ?? 0;
     console.info(`[review] user=${userId} completed submission count=${completedCount}`);
 
-    if (completedCount === 5) {
+    if (completedCount >= 5) {
       console.info(`[aggregate-review] triggering aggregate review for user=${userId}`);
       await runAggregateReviewBackground(env, userId, email);
     }
