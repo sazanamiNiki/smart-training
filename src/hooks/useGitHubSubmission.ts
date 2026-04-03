@@ -24,6 +24,7 @@ export interface UseGitHubSubmissionReturn {
   submitSuccess: boolean;
   startAuth: () => void;
   submit: (quId: string, code: string, description: string) => Promise<void>;
+  resetSubmit: () => void;
 }
 
 interface DeviceCodeResponse {
@@ -173,6 +174,11 @@ export function useGitHubSubmission(): UseGitHubSubmissionReturn {
     [githubToken],
   );
 
+  const resetSubmit = useCallback(() => {
+    setSubmitSuccess(false);
+    setSubmitError(null);
+  }, []);
+
   return {
     authStatus,
     deviceFlowData,
@@ -182,5 +188,6 @@ export function useGitHubSubmission(): UseGitHubSubmissionReturn {
     submitSuccess,
     startAuth,
     submit,
+    resetSubmit,
   };
 }
